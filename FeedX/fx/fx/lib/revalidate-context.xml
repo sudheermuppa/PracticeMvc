@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<import resource="classpath:launch-context.xml"/>
+
+	<!-- 
+		 Configure the step where we need to re-validate - start with the JDBC reader
+		 Include the ROW_ID as we will need it in the writer. There are some subtle differences
+		 in the process.
+	 -->
+	
+	<bean id="revalidationDecider" class="com.loyaltymethods.fx.step.RevalidationDecider"/>
+	
+	<bean id="rowMapper" class="com.loyaltymethods.fx.file.RevalidationRowMapper">
+		<property name="dtlFields" value="${dtlDBFields},ROW_ID"/>
+		<property name="dtlPrefix" value="__LM__NO__VALUE__"/>
+	</bean>
+
+	<bean id="updateWriter" class="com.loyaltymethods.fx.file.PrestageWriter" scope="step">
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="targetTable" value="${prestageTable}"/>
+		<property name="fileId" value="#{jobExecutionContext['fileId']}"/>
+		<property name="operation" value="UPDATE"/>
+	</bean>
+	
+	<bean id="jdbcRevalidationReader" class="org.springframework.batch.item.database.JdbcCursorItemReader" scope="step">
+		<property name="dataSource" ref="siebelDataSource" />
+		<property name="sql" value="SELECT ${dtlDBFields},ROW_ID FROM ${prestageTable} WHERE FILE_ID = '#{jobExecutionContext['fileId']}' AND REC_STATUS='Queued'" />
+		<property name="rowMapper" ref="rowMapper" />
+	</bean>
+</beans>

@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+open(F, "$ENV{'FX_HOME'}/conf/batch.properties") || die "Can not open batch.properties: $!";
+
+while(<F>)
+{
+	chomp;
+	/misc\.timezone=(.*)$/ && do {
+		print $1;
+		close(F);
+		exit 0;
+	};
+}
+
+close(F);
+print STDERR "Could not locate timezone property in batch.properties. Please ensure that is set correctly before running.\n";
+exit(1);

@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+
+$FX_HOME = $ENV{'FX_HOME'};
+$FX_HOME =~ s/^\/c/c:/g;
+system("sqlplus batch/batch@xe \@$FX_HOME/test/clean.sql");
+system("sqlplus siebel/siebel@xe \@$FX_HOME/test/clean_sbl.sql");
+

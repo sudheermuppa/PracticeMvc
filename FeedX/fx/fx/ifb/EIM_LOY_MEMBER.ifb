@@ -1,0 +1,13 @@
+; FeedXChange Loyalty Member IFB File
+; Copyright(c) 2007-2012 by Loyalty Methods, Inc. All rights reserved.
+
+[Siebel Interface Manager]
+	PROCESS = FX IMPORT MEMBER
+
+[FX IMPORT MEMBER]
+	TYPE = IMPORT
+	BATCH = $BatchRange
+	TABLE = EIM_LOY_MEMBER
+	UPDATE STATISTICS = FALSE
+    
+    ONLY BASE TABLES = S_LOY_MEMBER

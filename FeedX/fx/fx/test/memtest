@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+$REC = 10;
+$POINT_LIMIT = 3500;
+
+@mem_nums = (
+"1-1723668",
+"1-1723711",
+"1-1723755",
+"1-1723799",
+"1-1986410" );
+
+print "H|06/12/2012 11:12:13\n";
+
+for( $i = 0; $i<$REC; $i++ ) {
+        $points = $i % $POINT_LIMIT+1;
+        $day = $i % 20+1;
+        $member = $mem_nums[$i % @mem_nums];
+        print "D|$member|Member $i|Individual|Partner|06/$day/2012 11:11:19|Inactive\n";
+}
+
+print "T|10\n";

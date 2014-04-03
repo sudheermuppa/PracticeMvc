@@ -1,0 +1,86 @@
+#!/usr/bin/perl -w
+
+##################################################################################################
+# FeedXChange DB Install Utility 
+# Copyright (c) 2011 by Loyalty Methods, Inc.
+##################################################################################################
+
+print "FeedXChange DB Install Utility\nCopyright (c) 2011 by Loyalty Methods, Inc.\n\n";
+
+%allParams= ();
+
+$respFile = shift @ARGV;
+
+if( defined($respFile)  ) {
+	open $stdIn, "<", $respFile || die $!;
+} else {
+	$stdIn = *STDIN;
+}
+
+@prompts = (
+	["Siebel DB User Name", "siebel.user", "SIEBEL"], 
+	["Siebel DB Password", "siebel.password", ""],
+	["Batch DB User Name", "batch.user","BATCH"],
+	["Batch DB Password", "batch.password", ""],
+	["Siebel database tnsname service name:", "db", "SIEBEL"],
+);
+
+for my $prompt (@prompts) {
+	&configParam($prompt->[0],$prompt->[1],$prompt->[2]);
+}
+
+$sblUser = $allParams{"siebel.user"};
+$sblPwd = $allParams{"siebel.password"};
+$batchUser = $allParams{"batch.user"};
+$batchPwd = $allParams{"batch.password"};
+$db = $allParams{"db"};
+
+# install batch/batch@siebel siebel/siebel@siebel
+
+# grant access to the batch schema
+system("sqlplus -S $sblUser/$sblPwd\@$db \@GRANT_SIEBEL_TO_BATCH.sql $batchUser");
+
+# simple functions
+system("sqlplus -S $batchUser/$batchPwd\@$db \@TO_62BASE.sql");
+system("sqlplus -S $batchUser/$batchPwd\@$db \@LM_ROWID_SEQ.sql");
+system("sqlplus -S $batchUser/$batchPwd\@$db \@LM_EIM_SEQ.sql");
+system("sqlplus -S $batchUser/$batchPwd\@$db \@LM_GEN_UID.sql");
+system("sqlplus -S $batchUser/$batchPwd\@$db \@LM_ERROR.sql");
+
+# batch schema
+system("sqlplus -S $batchUser/$batchPwd\@$db \@spring_batch.sql");
+
+#create synonyms for SIEBEL (not always useable)
+system("sqlplus -S $sblUser/$sblPwd\@$db \@CREATE_SYNONYMS.sql $batchUser");
+
+# grant objects in BATCH schema to SIEBEL
+system("sqlplus -S $batchUser/$batchPwd\@$db \@GRANT_BATCH_TO_SIEBEL.sql $sblUser");
+
+# alter EIM tables to add FILE_ID and index it
+system("sqlplus -S $sblUser/$sblPwd\@$db \@ALTER_EIM_TABLES.sql $sblUser"); 
+
+# --------------------------------------- Routines ----------------------------------------
+
+# subroutine to request parameter values and loop when they are not correctly entered
+# todo: add parameter validation routine - e.g. path validation 
+
+sub configParam {
+	my ($paramName,$paramID,$paramDefault) = @_;
+	my $value = "";
+	
+	chomp $paramDefault;
+
+	while( $value =~ /^\s*$/ ) {
+
+		print "Enter $paramName (Enter=$paramDefault): ";
+		$value = <$stdIn>;
+		chomp $value;
+
+		$value = $paramDefault if $value =~ /^\s*$/;
+		print "Sorry, you have to enter a value. Please try again.\n" if $value =~ /^\s*$/;
+	}
+
+	$allParams{$paramID} = $value;
+}
+
+

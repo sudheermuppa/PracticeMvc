@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+$cmdLine = ". por/siebenv.sh;por/bin/srvrmgr ";
+
+while( $p = shift @ARGV ) {
+	$cmdLine .= $p . " ";
+};
+
+system($cmdLine);

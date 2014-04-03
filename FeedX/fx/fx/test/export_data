@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+
+$creds = shift @ARGV;
+$file = shift @ARGV;
+$tables = `cat table_export.txt`;
+chomp $tables;
+
+system("exp $creds file=$file tables=\\($tables\\)");

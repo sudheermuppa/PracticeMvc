@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	<!-- Metadata generation info for transactions -->
+
+	<util:map id="TxnTableMap">
+		<entry key="EIMTable" value="EIM_LOY_TXN"/>
+		<entry key="BaseTable" value="S_LOY_TXN"/>
+		<entry key="ContextFile" value="txn-job-context.xml"/>
+		<entry key="SysFields" value-ref="txnSysFields" />
+		<entry key="EntitySpecifics" value-ref="txnSpecifics" />
+	</util:map>
+	
+	<bean id="txnSpecifics" class="com.loyaltymethods.fx.meta.TransactionSpecifics" />
+
+	<!-- System fields that will need to be there regardless. We start by plugging them in, but they can be
+		 overriden by the integraiton template -->
+		 
+	<util:map id="txnSysFields">
+		<entry key="PROG_NAME">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROG_NAME"/>
+				<entry key="System" value="True"/>
+				<entry key="Default" value="${programName}"/>
+			</map>
+		</entry>
+		
+		<entry key="PARTNER_ACCNT_NAME">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PARTNER_ACCNT_NAME"/>
+				<entry key="System" value="True"/>
+				<entry key="Default" value="${partnerName}"/>
+			</map>
+		</entry>
+		
+		<entry key="TXN_CHANNEL_CD">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TXN_CHANNEL_CD"/>
+				<entry key="Default" value="Partner"/>
+			</map>
+		</entry>
+		<entry key="TYPE_CD">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TYPE_CD"/>
+				<entry key="Default" value="Accrual"/>
+			</map>
+		</entry>
+		<entry key="SUB_TYPE_CD">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.SUB_TYPE_CD"/>
+				<entry key="Default" value="Product"/>
+			</map>
+		</entry>
+		<entry key="QUAL_FLG">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.QUAL_FLG"/>
+				<entry key="Default" value="Y"/>
+			</map>
+		</entry>
+		<entry key="BID_FLG">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.BID_FLG"/>
+				<entry key="Default" value="N"/>
+			</map>
+		</entry>
+		<entry key="STATUS_CD">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.STATUS_CD"/>
+				<entry key="Default" value="Queued"/>
+			</map>
+		</entry>
+		
+		<entry key="TXN_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TXN_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		
+		<entry key="VIS_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.VIS_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		
+		<entry key="TXN_NUM">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="Default" value="Expr: '2-'||LM_GEN_UID()"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TXN_NUM"/>
+			</map>
+		</entry>
+		
+		<entry key="UNACC_MINOR_FLG">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.UNACC_MINOR_FLG"/>
+				<entry key="Default" value="N"/>				
+			</map>
+		</entry>
+		<entry key="PROG_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROG_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		<entry key="PROD_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		
+		<entry key="PROD_VEN_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_VEN_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		
+		<entry key="PROD_VEN_LOC">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_VEN_LOC"/>
+				<entry key="Default" value="INTERNAL"/>				
+			</map>
+		</entry>
+		
+		<entry key="PROD_VEN_NAME">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_VEN_NAME"/>
+				<entry key="Default" value="${partnerName}"/>				
+			</map>
+		</entry>				
+		
+		
+		<entry key="MEMBER_MEM_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.MEMBER_MEM_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		
+		<entry key="MEMBER_PROG_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.MEMBER_PROG_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		
+		<entry key="MEMBER_PROG_NAME">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.MEMBER_PROG_NAME"/>
+				<entry key="Default" value="${programName}"/>				
+			</map>
+		</entry>
+		
+		<entry key="POINT_ATTR_TYPE_CD">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_ATTR_TYPE_CD"/>
+				<entry key="Default" value="Point"/>				
+			</map>
+		</entry>
+		
+		<entry key="POINT_INTERNALNAME">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_INTERNALNAME"/>
+				<entry key="Default" value="Point Type 1 Value"/>				
+			</map>
+		</entry>
+		
+		<entry key="POINT_OBJECT_CD">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_OBJECT_CD"/>
+				<entry key="Default" value="Member"/>				
+			</map>
+		</entry>
+		
+		<entry key="POINT_PROG_NAME">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_PROG_NAME"/>
+				<entry key="Default" value="${programName}"/>				
+			</map>
+		</entry>
+
+		<entry key="POINT_PROG_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_PROG_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		
+		<entry key="OWNER_LOGIN">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.OWNER_LOGIN"/>
+				<entry key="Default" value="SADMIN"/>				
+			</map>
+		</entry>
+		
+		<entry key="SUBMIT_LOGIN">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.SUBMIT_LOGIN"/>
+				<entry key="Default" value="SADMIN"/>				
+			</map>
+		</entry>
+						
+		<entry key="EXPIRE_IN_DAYS">
+			<map>
+				<entry key="Type" value="Number"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.EXPIRE_IN_DAYS"/>
+				<entry key="Default" value="0"/>			
+			</map>
+		</entry>		
+		<entry key="PARTNER_ACCNT_LOC">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PARTNER_ACCNT_LOC"/>
+				<entry key="Default" value="INTERNAL"/>				
+			</map>
+		</entry>
+		<entry key="PARTNER_ACCNT_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PARTNER_ACCNT_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		<entry key="OVR_DUP_CHECK_FLG">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.OVR_DUP_CHECK_FLG"/>
+				<entry key="Default" value="N"/>				
+			</map>
+		</entry>
+		<entry key="OVR_PRI_FLAG">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.OVR_PRI_FLAG"/>
+				<entry key="Default" value="N"/>				
+			</map>
+		</entry>
+		<entry key="VOUCHER_QTY">
+			<map>
+				<entry key="Type" value="Number"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.VOUCHER_QTY"/>
+				<entry key="Default" value="0"/>				
+			</map>
+		</entry>
+		
+		<entry key="CURCY_CD">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.CURCY_CD"/>
+				<entry key="Default" value="USD"/>				
+			</map>
+		</entry>	
+		
+		<!-- Meta-data generated -->
+		
+		<entry key="EXTERNAL_FLG">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.EXTERNAL_FLG"/>
+				<entry key="Default" value="Y"/>				
+			</map>
+		</entry>	
+	</util:map>
+	
+	
+</beans>

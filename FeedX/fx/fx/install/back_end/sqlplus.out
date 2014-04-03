@@ -1,0 +1,13 @@
+ERROR:
+ORA-12154: TNS:could not resolve the connect identifier specified
+
+
+Enter password: ERROR:
+ORA-01017: invalid username/password; logon denied
+
+
+Enter password: ERROR:
+ORA-01017: invalid username/password; logon denied
+
+
+SP2-0157: unable to CONNECT to ORACLE after 3 attempts, exiting SQL*Plus

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+
+	<import resource="classpath:file-parsing-context.xml" />
+	<import resource="classpath:sqlstep-context.xml" />
+	<import resource="classpath:step-context.xml" />
+	<import resource="classpath:revalidate-context.xml" />
+	<import resource="classpath:response-context.xml" />
+	<import resource="classpath:integration-context.xml" />
+		
+	<!-- Job Structure needed for Transaction Processing -->
+
+	<job id="TxnImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<flow id="TxnImport.importFlow" parent="commonFileFlow" next="TxnImport.eimTypeDecision"/>
+		
+		<decision id="TxnImport.eimTypeDecision" decider="txnOpSequenceDecider">
+			<next on="SEQUENCE" to="TxnImport.sequencedProcessing"/>
+			<next on="NOSEQUENCE" to="TxnImport.allProcessing" />
+		</decision>
+		
+		<flow id="TxnImport.allProcessing" parent="allProcessingFlow" next="TxnImport.checkEngineProcessing"/>
+		<flow id="TxnImport.sequencedProcessing" parent="sequencedProcessingFlow" next="TxnImport.checkEngineProcessing"/>
+
+		<step id="TxnImport.checkEngineProcessing" parent="checkEngineProcessingStep" next="TxnImport.responseFlow"/>
+		<flow id="TxnImport.responseFlow" parent="commonResponseFlow"/>
+	</job>
+
+	<!-- Only run validation and EIM, no engine processing will be checked -->
+
+	<job id="EIMImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<flow id="EIMImport.importFlow" parent="commonFileFlow" next="EIMImport.eimFlow"/>
+		<flow id="EIMImport.eimFlow" parent="allProcessingFlow" next="EIMImport.connectTxnIds"/>
+		<step id="EIMImport.connectTxnIds" parent="connectTxnIdsStep" next="EIMImport.updateStatus"/>
+		<step id="EIMImport.updateStatus" parent="updateStatusStep" next="EIMImport.responseFlow"/>
+		<flow id="EIMImport.responseFlow" parent="commonResponseFlow"/>
+	</job>
+	
+	<!-- Just import and validate the file -->
+	
+	<job id="FileImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<step id="FileImport.preValidate" parent="preValidateStep" next="FileImport.decisionPoint"/>
+		<decision id="FileImport.decisionPoint" decider="revalidationDecider">
+			<next on="REVALIDATE" to="FileImport.dbRevalidate"/>
+			<next on="*" to="FileImport.checkTxnDuplicates"/>
+		</decision>
+		<step id="FileImport.dbRevalidate" parent="dbRevalidateStep" next="FileImport.checkTxnDuplicates"/>
+		<step id="FileImport.checkTxnDuplicates" parent="checkTxnDuplicatesStep" next="FileImport.updateStatus"/>
+		<step id="FileImport.updateStatus" parent="updateStatusStep" next="FileImport.responseFlow"/>
+		<flow id="FileImport.responseFlow" parent="commonResponseFlow"/>
+	</job>
+	
+	<!-- Generic import and response flows -->
+	
+	<flow id="commonFileFlow" xmlns="http://www.springframework.org/schema/batch">
+		<step id="file_preValidate" parent="preValidateStep" next="file_decisionPoint"/>
+		<decision id="file_decisionPoint" decider="revalidationDecider">
+			<next on="REVALIDATE" to="file_dbRevalidate"/>
+			<next on="*" to="file_validateTxnMembers"/>
+		</decision>
+		<step id="file_dbRevalidate" parent="dbRevalidateStep" next="file_validateTxnMembers"/>
+		<step id="file_validateTxnMembers" parent="validateTxnMembersStep" next="file_validateTxnProducts"/>
+		<step id="file_validateTxnProducts" parent="validateTxnProductsStep" next="file_checkTxnDuplicates"/>
+		<step id="file_checkTxnDuplicates" parent="checkTxnDuplicatesStep" />
+	</flow>
+	
+	<flow id="commonResponseFlow" xmlns="http://www.springframework.org/schema/batch">
+		<decision id="file_responseDecision" decider="responseDecider">
+			<next on="RESPONSE" to="file_genResponse"/>
+			<end on="*" />
+		</decision>
+		<step id="file_genResponse" parent="genResponseStep" next="file_sendResponse" />
+		<step id="file_sendResponse" parent="sendResponseStep" />
+	</flow>
+	
+	<!-- Engine checking is the same for all types of transactions involved -->
+	
+	<flow id="commonLoyEngineFlow" xmlns="http://www.springframework.org/schema/batch">
+		<step id="waitForLoyEngine" parent="waitForLoyEngineStep" next="checkEngineProcessing" />
+		<step id="checkEngineProcessing" parent="checkEngineProcessingStep" />
+	</flow>
+	
+	<!-- Define the sequenced and all processing flow -->
+
+	<flow id="sequencedProcessingFlow" xmlns="http://www.springframework.org/schema/batch">
+		<!-- First stage everything -->
+		<step id="Seq_stageTxnEIM" parent="stageTxnEIMStep" next="Seq_runAccrualEIM"/>
+
+		<!-- Run Accrual EIM -->
+		<step id="Seq_runAccrualEIM" parent="runAccrualEIMStep" next="Seq_connectTxnIds"/>
+		<step id="Seq_connectTxnIds" parent="connectTxnIdsStep" next="Seq_waitForLoyEngine"/>
+		<step id="Seq_waitForLoyEngine" parent="waitForLoyEngineStep" next="Seq_runRedemptionEIM" />
+		
+		<!-- Run Redemption EIM  -->
+		<step id="Seq_runRedemptionEIM" parent="runRedemptionEIMStep" next="Seq_connectTxnIds2"/>
+		<step id="Seq_connectTxnIds2" parent="connectTxnIdsStep" next="Seq_waitForLoyEngine2"/>
+		<step id="Seq_waitForLoyEngine2" parent="waitForLoyEngineStep" />
+	</flow>
+	
+	<flow id="allProcessingFlow" xmlns="http://www.springframework.org/schema/batch">
+		<step id="AllProc_stageTxnEIM" parent="stageTxnEIMStep" next="AllProc_runAllEIM"/>
+		
+		<!-- Notice we are using runAllEIMStep and not the runEIMStep defined in the step-context.xml  -->
+		<step id="AllProc_runAllEIM" parent="runAllEIMStep" next="AllProc_connectTxnIds"/>
+		<step id="AllProc_connectTxnIds" parent="connectTxnIdsStep" next="AllProc_waitForLoyEngine"/>
+		<step id="AllProc_waitForLoyEngine" parent="waitForLoyEngineStep" />
+	</flow>
+	
+	<!-- Use a decider to check if we need to sequence the EIM or not -->
+	
+	<bean id="txnOpSequenceDecider" class="com.loyaltymethods.fx.step.TxnOpSequenceDecider">
+		<property name="intFile" ref="intFileDAO"/>
+	</bean>
+
+	<!-- Sadly we need special EIM for now -->
+
+	<!-- Abstract EIM parent to shorten the definitions of the Acccrual, Redemption and All beans below -->
+		
+	<bean id="abstractEIMBean" abstract="true" class="com.loyaltymethods.fx.step.RunTxnEIMStep" xmlns="http://www.springframework.org/schema/beans">
+		<property name="fileId" value="#{jobExecutionContext['fileId']}"/>
+		<property name="sblDS" ref="siebelDataSource"/>
+		<property name="srvrmgrPath" value="${srvrmgr.executable.path}"/>
+		<property name="siebelUser" value="${srvrmgr.param.username}"/>
+		<property name="siebelPwd">
+			<util:property-path path="passwordManager.srvrmgrPassword"/>
+		</property>
+		<property name="siebelGateway" value="${srvrmgr.param.gateway}"/>
+		<property name="siebelServer" value="${srvrmgr.param.server}"/>
+		<property name="siebelEnterprise" value="${srvrmgr.param.enterprise}"/>
+		<property name="IFBFile" value="${IFBFile}"/>
+		<property name="sleepInterval" value="${eim.status.interval}"/>
+		<property name="retryMaxCount" value="${eim.status.timeout}"/>
+		<property name="intFileDAO" ref="intFileDAO"/>
+		<property name="eimTable" value="${eimTable}"/>
+	</bean>
+
+	<!-- Configure 3 different types of EIM - Accrual, Redemption and All -->
+	
+	<step id="runAllEIMStep" abstract="true"  xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true">
+			<bean id="runAllEIMStepBean"  scope="step" parent="abstractEIMBean"  xmlns="http://www.springframework.org/schema/beans"/> 	
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+
+	<step id="runAccrualEIMStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<bean id="runAccrualEIMStepBean" scope="step"  parent="abstractEIMBean"  xmlns="http://www.springframework.org/schema/beans">
+				<property name="txnTypeFilter" value="'Accrual'"/>
+			</bean>
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+
+	<step id="runRedemptionEIMStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<bean id="runRedemptionEIMStepBean"  scope="step" parent="abstractEIMBean"  xmlns="http://www.springframework.org/schema/beans">
+				<property name="txnTypeFilter" value="'Redemption'"/>
+			</bean>
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+
+</beans>

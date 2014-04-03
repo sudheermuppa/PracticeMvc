@@ -1,0 +1,3 @@
+#!/bin/sh
+export FX_HOME=$1
+sh paramgen

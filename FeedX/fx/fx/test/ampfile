@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+
+$REC = 10;
+$POINT_LIMIT = 3500;
+
+@mem_nums = (
+"1-1723668",
+"1-1723711",
+"1-1723755",
+"1-1723799",
+"1-1986410" );
+
+for( $i = 0; $i<$REC; $i++ ) {
+        $points = $i % $POINT_LIMIT+1;
+        $day = $i % 20+1;
+        $member = $mem_nums[$i % @mem_nums];
+        print "$member|Txn$i|$i|$points|Partner Activity|06/$day/2012 11:11:19\n";
+}
+
+print "T|800|06/02/2012 00:00:00\n";

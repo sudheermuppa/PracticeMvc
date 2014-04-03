@@ -1,0 +1,4 @@
+export FX_HOME=$1
+echo $FX_HOME
+source $FX_HOME/bin/env.sh
+$JAVA_HOME/bin/java -Dfx.homedir=$FX_HOME -classpath "$FX_HOME/ext:$FX_HOME/conf:$FX_HOME/jobs:$FX_HOME/lib/*:$FX_HOME/lib" com.loyaltymethods.fx.meta.ParamGen

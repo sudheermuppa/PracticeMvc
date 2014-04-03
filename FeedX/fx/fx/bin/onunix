@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cp $FX_HOME/bin/unix_env.sh $FX_HOME/bin/env.sh
+cp $FX_HOME/conf/archive/batch_unix.properties $FX_HOME/conf/batch.properties
+cp $FX_HOME/bin/unix_clean $FX_HOME/bin/clean

@@ -1,0 +1,356 @@
+#!/usr/bin/perl -w
+
+##################################################################################################
+# FeedXChange Configuration Utility Ver. 1.0
+# Copyright (c) 2011 by Loyalty Methods, Inc.
+#
+# Assumes system is installed, and does the following:
+#
+# Collects minimal parameter info
+#   - fx base install path
+#   - JDK path
+#   - default timezone name
+#		- siebel and batch credentials
+#   - TNSNAME for the data source
+#   - siebel siebsrvr absolute path
+#   - srvrmgr command line values (including default server)
+#
+# Seeds the Paramters in the db and runs the initial paramgen
+# Alters the srvrmgr command line which requires absolute paths
+# Alters the env.sh command line which requires basic parameters to operate correctly
+# Distributes our IFB files to the admin folder of the server
+#
+##################################################################################################
+
+require 'paramDescs.pl';
+require 'errorDescs.pl';
+
+use File::Copy;
+
+print "FeedXChange Configuration Utility Ver. 1.0\nCopyright(c) 2011 by Loyalty Methods, Inc.\n\n";
+print "This program will collect basic parameters in order to configure the FeedXChange application\n\n";
+
+RESTART:
+
+%allParams= ();
+
+$respFile = shift @ARGV;
+
+if( defined($respFile)  ) {
+	open $stdIn, "<", $respFile || die $!;
+} else {
+	$stdIn = *STDIN;
+}
+
+
+@prompts = (
+	["FeedXChange base path", "FX_HOME", `cd ..; pwd`],
+	["Siebel DB User Name", "db.siebel.jdbc.user", "SIEBEL"], 
+	["Siebel DB Password", "db.siebel.jdbc.password", ""],
+	["Batch DB User Name", "db.batch.jdbc.user","BATCH"],
+	["Batch DB Password", "db.batch.jdbc.password", ""],
+	["JDK Home", "JAVA_HOME", $ENV{JAVA_HOME}],
+	["Siebel 'siebsrvr' Path", "SIEBSRVR_PATH", ""],
+	["Default Timezone", "misc.timezone", "America/Los_Angeles"],
+	["JDBC URL to Siebel Database","db.jdbc.url", "jdbc:oracle:thin:\@\/\/localhost:1521\/SIEBEL"],
+	["JDBC Deiver to Siebel Database","db.jdbc.driver", "oracle.jdbc.driver.OracleDriver"],
+	["User name for srvrmgr (/u option)","srvrmgr.param.username","SADMIN"],
+	["Password for srvrmgr (/p option)","srvrmgr.param.password",""],
+	["Gateway for srvrmgr (/g option)","srvrmgr.param.gateway","localhost"],
+	["Siebel Enterprise Name for srvrmgr (/e option)","srvrmgr.param.enterprise",""],
+	["Siebel Server Name for srvrmgr (/s option)","srvrmgr.param.server",""],
+	["SMTP Host","mail.host","localhost"],
+	["SMTP Port","mail.port", "25"],
+	["SMTP Authentication Enabled","mail.authenticate","true"],
+	["SMTP Mail TLS Enabled","mail.enableTLS", "true"],
+);
+
+
+for my $prompt (@prompts) {
+	&configParam($prompt->[0],$prompt->[1],$prompt->[2]);
+}
+
+@dirPrompts = (
+	["Default Input File Directory", "batch.incoming.path", "$allParams{FX_HOME}/data/incoming"],
+	["Default Output File Directory", "batch.outgoing.path","$allParams{FX_HOME}/data/outgoing"],
+	["Default Processed File Directory", "batch.processed.path", "$allParams{FX_HOME}/data/processed"]
+);
+
+for my $prompt (@dirPrompts) {
+	&configParam($prompt->[0],$prompt->[1],$prompt->[2]);
+}
+
+@prompts = (@prompts, @dirPrompts);
+
+if( $allParams{"mail.authenticate"} eq "true" ) {
+	@mailAuthPrompts = (
+		["SMTP Authentication Username","mail.auth.username",""],
+		["SMTP Authentication Password", "mail.auth.password", ""] 
+	);
+
+	for my $prompt (@mailAuthPrompts) {
+		&configParam($prompt->[0],$prompt->[1],$prompt->[2]);
+	}
+	@prompts = (@prompts, @mailAuthPrompts);
+}
+
+# Confirm all parameter values:
+
+print "\n------------ Configuration Review -----------------\n\n";
+
+
+for my $key ( (@prompts) ) {
+	print "$key->[0] = $allParams{$key->[1]}\n";
+}	
+
+print "\n------------ Please Confirm Parameters -----------------\n\n";
+
+my $conf = "";
+
+while( !( $conf =~ /^(yes|no)$/)) 
+{
+	print "Are these parameters correct? (yes/no):";
+	$conf = <$stdIn>;
+} 
+
+if( $conf =~ /no/ ) {
+	goto RESTART;
+}
+
+# Create bootstrap batch.properties file
+
+$batchProperties = $allParams{"FX_HOME"} . "/conf/batch.properties";
+open(F, ">$batchProperties") || die "Can't create bootstrap properties. $!";
+
+print F "# Bootstrap properties for FeedXChange configuration\n";
+
+for my $key ( keys %allParams ) {
+	
+	$key =~ /^db\./ && do {
+		print F "$key=$allParams{$key}\n";
+	};
+
+}
+close(F);
+
+# provides some reasonable defaults based on what was already entered
+
+%defaults = ( 
+	"dll.purge.name" => "purgefile",
+	"job.fileget.retry.max" => 3,
+	"job.fileget.retry.sleep" => 300000,
+	"job.error.threshold" => 0,
+	"status.record.processed" => "Processed",
+	"status.record.error" => "Error",
+	"batch.meta.path" => "$allParams{FX_HOME}/jobs",
+	"batch.bin.path" => "$allParams{FX_HOME}/bin",
+	"response.suffix" => "ack",
+	"loyengine.inactivity.timeout" => "30000",
+	"loyengine.inactivity.interval" => "5000",
+	"batch.log.path" => "$allParams{FX_HOME}/logs",
+	"revalidate.commit.interval" => 1,
+	"validate.commit.interval" => 1,
+	"srvrmgr.executable.path" => "$allParams{FX_HOME}/bin/srvrmgr",
+	"eim.status.interval" => 1000,
+	"eim.status.timeout" => 18000,
+	"demo.sleep" => 1,
+	"batch.conf.path" => "$allParams{FX_HOME}/conf",
+	"dll.meta.name" => "metagen",
+	"dll.run.name" => "runbatch",
+	"dll.rerun.name" => "rerunbatch",
+	"dll.param.name" => "paramgen",
+	"file.page.size" => "40",
+	"mail.message.from" => "FeedXChange",
+	"batch.request.server" => $allParams{"srvrmgr.param.server"}
+);
+
+# collect tnsname entry for Siebel database although we technically shouldn't need it because we collected it already
+
+print "Please enter the TNSNAMES entry for your Siebel database: ";
+$TNSNAME = <$stdIn>;
+chomp $TNSNAME;
+
+# generate the insert statements for the databsae and run using sqlplus
+
+$fileName = "$allParams{FX_HOME}/install/back_end/seedParams.sql";
+
+open( SQL, ">$fileName" ) || die "Couldn't create the seed SQL file. $!";
+
+print SQL "DELETE FROM SIEBEL.CX_FINT_SETUP;\n";
+
+for my $key ( @prompts ) {
+
+	my $name = $key->[1];
+	my $value = $allParams{$name};
+	my $comments = $descs{$name};
+
+	$comments = "" unless $comments;
+
+	# accomodate the stupid shell tricks with paths
+	$value =~ s/^\/c\//\/c:\// if $ENV{"FX_WEIRD_SHELL"};
+
+	my $doc = <<END;
+		INSERT INTO SIEBEL.CX_FINT_SETUP (ROW_ID, CREATED, CREATED_BY, LAST_UPD, LAST_UPD_BY, NAME, VALUE, COMMENTS) 
+		VALUES  (
+				'1-' || LM_GEN_UID(),
+				CURRENT_DATE,
+				'0-1',
+				CURRENT_DATE,
+				'0-1',
+				'$name',
+				'$value', '$comments');
+END
+;
+
+	print SQL $doc if $name=~/\./;
+}
+
+for my $key ( keys %defaults ) {
+
+	my $name = $key;
+	my $value = $defaults{$key};
+	my $comments = $descs{$name};
+
+	$comments = "" unless $comments;
+
+	# This is a workaround to compensate for the weird bash that runs Git on Windows. To do with c:\ vs. /c/, etc.
+	$value =~ s/^\/c\//\/c:\// if $ENV{"FX_WEIRD_SHELL"};
+
+	print SQL <<END;
+		INSERT INTO SIEBEL.CX_FINT_SETUP (ROW_ID, CREATED, CREATED_BY, LAST_UPD, LAST_UPD_BY, NAME, VALUE, COMMENTS) 
+		VALUES  (
+				'1-' || LM_GEN_UID(),
+				CURRENT_DATE,
+				'0-1',
+				CURRENT_DATE,
+				'0-1',
+				'$name',
+				'$value', '$comments');
+END
+}
+
+# Add the error table setup
+
+print SQL "DELETE FROM SIEBEL.CX_FINT_ERROR\n";
+
+for my $key ( keys %errorDescs ) {
+
+	my $name = $key;
+	my $desc = $errorDescs{$name};
+	print SQL <<END;
+	INSERT INTO SIEBEL.CX_FINT_ERROR (ROW_ID, CREATED, CREATED_BY, LAST_UPD, LAST_UPD_BY, ERROR_CD, ERROR_DESC)
+	 VALUES (
+	 	'1-' || LM_GEN_UID(),
+		CURRENT_DATE,
+		'0-1',
+		CURRENT_DATE,
+		'0-1',
+		'$name',
+		'$desc' );
+END
+}
+
+print SQL "COMMIT;\n/\nQUIT\n/\n";
+
+close(SQL);
+
+# do the database update
+
+$login = $allParams{"db.siebel.jdbc.user"};
+$password = $allParams{"db.siebel.jdbc.password"};
+
+$fileName = "seedParams.sql";
+
+print "Creating database parameters for paramgen...";
+system("sqlplus -S $login/$password\@$TNSNAME \@$fileName > sqlplus.out"); # || die "Could not run sqlplus to create the setup parameters in the Siebel database";
+print "Done\n";
+
+# Setup the env.sh file
+
+print "Writing env.sh file...";
+$envSh = $allParams{FX_HOME} . "/bin/env.sh";
+
+open( ENVSH, ">", $envSh) || die "Couldn't open env.sh for writing. $!";
+
+print ENVSH "export FX_HOME=" . $allParams{FX_HOME} . "\n";
+print ENVSH "export JAVA_HOME='" . $allParams{JAVA_HOME} . "'\n";
+print ENVSH "export FX_TIME_ZONE=" . $allParams{"misc.timezone"} . "\n";
+
+close(ENVSH);
+
+print "Done\n";
+
+# Now run the param generator
+
+print "Running paramgen for the first time...";
+
+$paramCmdLine = $allParams{FX_HOME} . "/bin/paramgen";
+system("export FX_HOME=$allParams{FX_HOME}; $paramCmdLine"); #|| die "Failed exectuion for paramgen. Please check the logs.";
+
+print "Done\n";
+
+# Now create the server manager script
+print "Creating server manager script...";
+
+$srvrmgrTemplate = "$allParams{FX_HOME}/install/back_end/srvrmgr.template";
+open(SRVT, "<", $srvrmgrTemplate ) || die "Can not open server manager template file. $!";
+
+$srvrmgrFile = "$allParams{FX_HOME}/bin/srvrmgr";
+open(SRVF, ">", $srvrmgrFile) || die "Can not create server manager file. $!";
+
+$srvPath = $allParams{SIEBSRVR_PATH};
+chomp $srvPath;
+$srvPath=~s/\r//g;
+
+
+while(my $line = <SRVT>) {
+	
+	$line =~ s/__SIEBSRVR__PATH__/$srvPath/g;
+	print SRVF $line;
+
+}
+close(SRVT);
+close(SRVF);
+
+print "Done\n";
+
+# now distribute our IFB files to the admin folder - easy as pie
+# note using srvPath
+
+print "Distributing IFB files to admin folder of server...";
+
+while(<$allParams{FX_HOME}/ifb/*.ifb>) {
+	my $file = $_;
+	copy($file,$srvPath . "/admin");
+}
+
+print "Done";
+
+print "\n\n ------------- SETUP COMPLETE ------------- \n\n";
+
+
+# --------------------------------------- Routines ----------------------------------------
+
+# subroutine to request parameter values and loop when they are not correctly entered
+# todo: add parameter validation routine - e.g. path validation 
+
+sub configParam {
+	my ($paramName,$paramID,$paramDefault) = @_;
+	my $value = "";
+	
+	chomp $paramDefault;
+
+	while( $value =~ /^\s*$/ ) {
+
+		print "Enter $paramName (Enter=$paramDefault): ";
+		$value = <$stdIn>;
+		chomp $value;
+
+		$value = $paramDefault if $value =~ /^\s*$/;
+		print "Sorry, you have to enter a value. Please try again.\n" if $value =~ /^\s*$/;
+	}
+
+	$allParams{$paramID} = $value;
+}
+
+

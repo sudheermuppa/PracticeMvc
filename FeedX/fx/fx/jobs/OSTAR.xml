@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<!-- Hertz Accrual Integration Metadata -->
+
+	<context:property-placeholder ignore-unresolvable="true" location="classpath:OSTAR.properties" />
+
+	 <import resource="classpath:txn-job-context.xml"/>
+	<util:map id="dtlMapping">
+		<entry key="TXN_CHANNEL_CD">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TXN_CHANNEL_CD" />
+				<entry key="Default" value="Partner" />
+			</map>
+		</entry>
+		<entry key="POINT_ATTR_TYPE_CD">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_ATTR_TYPE_CD" />
+				<entry key="Default" value="Point" />
+			</map>
+		</entry>
+		<entry key="TXN_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TXN_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+		<entry key="OWNER_LOGIN">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.OWNER_LOGIN" />
+				<entry key="Default" value="SADMIN" />
+			</map>
+		</entry>
+		<entry key="PROG_NAME">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROG_NAME" />
+				<entry key="System" value="True" />
+				<entry key="Default" value="${programName}" />
+			</map>
+		</entry>
+		<entry key="MEMBER_MEM_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.MEMBER_MEM_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+		<entry key="TYPE_CD">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TYPE_CD" />
+				<entry key="Default" value="Accrual" />
+			</map>
+		</entry>
+		<entry key="POINT_OBJECT_CD">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_OBJECT_CD" />
+				<entry key="Default" value="Member" />
+			</map>
+		</entry>
+		<entry key="OVR_PRI_FLAG">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.OVR_PRI_FLAG" />
+				<entry key="Default" value="N" />
+			</map>
+		</entry>
+		<entry key="EXPIRE_IN_DAYS">
+			<map>
+				<entry key="Type" value="Number" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.EXPIRE_IN_DAYS" />
+				<entry key="Default" value="0" />
+			</map>
+		</entry>
+		<entry key="MEMBER_MEM_NUM">
+			<map>
+				<entry key="Default" value="&lt;Unresolved&gt;" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.MEMBER_MEM_NUM" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="30" />
+			</map>
+		</entry>
+		<entry key="POINT_PROG_NAME">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_PROG_NAME" />
+				<entry key="Default" value="${programName}" />
+			</map>
+		</entry>
+		<entry key="PROD_VEN_LOC">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_VEN_LOC" />
+				<entry key="Default" value="INTERNAL" />
+			</map>
+		</entry>
+		<entry key="NUM_POINTS">
+			<map>
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.NUM_POINTS" />
+				<entry key="Type" value="Number" />
+				<entry key="Length" value="8" />
+			</map>
+		</entry>
+		<entry key="PROD_VEN_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_VEN_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+		<entry key="SUB_TYPE_CD">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.SUB_TYPE_CD" />
+				<entry key="Default" value="Product" />
+			</map>
+		</entry>
+		<entry key="TICKET_NUM">
+			<map>
+				<entry key="Format" value="[0-9]+" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TICKET_NUM" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="15" />
+			</map>
+		</entry>
+		<entry key="PROD_NAME">
+			<map>
+				<entry key="Default" value="Accrual Product" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_NAME" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="100" />
+			</map>
+		</entry>
+		<entry key="PROD_VEN_NAME">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_VEN_NAME" />
+				<entry key="Default" value="${partnerName}" />
+			</map>
+		</entry>
+		<entry key="BID_FLG">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.BID_FLG" />
+				<entry key="Default" value="N" />
+			</map>
+		</entry>
+		<entry key="CUSTOM_COL_1">
+			<map>
+				<entry key="Format" value="[0-9]+" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="15" />
+			</map>
+		</entry>
+		<entry key="VOUCHER_QTY">
+			<map>
+				<entry key="Type" value="Number" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.VOUCHER_QTY" />
+				<entry key="Default" value="0" />
+			</map>
+		</entry>
+		<entry key="POINT_INTERNALNAME">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_INTERNALNAME" />
+				<entry key="Default" value="Point 1 Value" />
+			</map>
+		</entry>
+		<entry key="UNACC_MINOR_FLG">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.UNACC_MINOR_FLG" />
+				<entry key="Default" value="N" />
+			</map>
+		</entry>
+		<entry key="TXN_NUM">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="Default" value="Expr: &apos;2-&apos;||LM_GEN_UID()" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.TXN_NUM" />
+			</map>
+		</entry>
+		<entry key="PARTNER_ACCNT_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PARTNER_ACCNT_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+		<entry key="CURCY_CD">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.CURCY_CD" />
+				<entry key="Default" value="USD" />
+			</map>
+		</entry>
+		<entry key="POINT_PROG_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.POINT_PROG_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+		<entry key="QUAL_FLG">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.QUAL_FLG" />
+				<entry key="Default" value="Y" />
+			</map>
+		</entry>
+		<entry key="VIS_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.VIS_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+		<entry key="SUBMIT_LOGIN">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.SUBMIT_LOGIN" />
+				<entry key="Default" value="SADMIN" />
+			</map>
+		</entry>
+		<entry key="MEMBER_PROG_NAME">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.MEMBER_PROG_NAME" />
+				<entry key="Default" value="${programName}" />
+			</map>
+		</entry>
+		<entry key="STATUS_CD">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.STATUS_CD" />
+				<entry key="Default" value="Queued" />
+			</map>
+		</entry>
+		<entry key="PARTNER_ACCNT_NAME">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PARTNER_ACCNT_NAME" />
+				<entry key="System" value="True" />
+				<entry key="Default" value="${partnerName}" />
+			</map>
+		</entry>
+		<entry key="PROG_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROG_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+		<entry key="OVR_DUP_CHECK_FLG">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.OVR_DUP_CHECK_FLG" />
+				<entry key="Default" value="N" />
+			</map>
+		</entry>
+		<entry key="EXTERNAL_FLG">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.EXTERNAL_FLG" />
+				<entry key="Default" value="Y" />
+			</map>
+		</entry>
+		<entry key="PARTNER_ACCNT_LOC">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PARTNER_ACCNT_LOC" />
+				<entry key="Default" value="INTERNAL" />
+			</map>
+		</entry>
+		<entry key="MEMBER_PROG_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.MEMBER_PROG_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+		<entry key="PROD_BU">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="System" value="True" />
+				<entry key="EIM Mapping" value="EIM_LOY_TXN.PROD_BU" />
+				<entry key="Default" value="Default Organization" />
+			</map>
+		</entry>
+	</util:map>
+	<util:map id="hfMapping">
+		<entry key="CUSTOM_COL_2">
+			<map>
+				<entry key="Format" value="CLD|FRA|RCQ|GNV|RMD|CNT|VVA" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="3" />
+			</map>
+		</entry>
+		<entry key="FILE_POINTS">
+			<map>
+				<entry key="Type" value="Number" />
+				<entry key="Length" value="8" />
+			</map>
+		</entry>
+		<entry key="FILE_DATE">
+			<map>
+				<entry key="Format" value="MMddyyyy" />
+				<entry key="Type" value="Date" />
+			</map>
+		</entry>
+		<entry key="__LM__SKIP_1">
+			<map>
+				<entry key="Skip" value="True" />
+			</map>
+		</entry>
+		<entry key="FILE_SIZE">
+			<map>
+				<entry key="Type" value="Number" />
+				<entry key="Length" value="8" />
+			</map>
+		</entry>
+		<entry key="__LM__SKIP_5">
+			<map>
+				<entry key="Skip" value="True" />
+			</map>
+		</entry>
+	</util:map>
+	<util:map id="dtlRespMapping">
+		<entry key="CUSTOM_COL_1">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="10" />
+			</map>
+		</entry>
+		<entry key="NUM_POINTS">
+			<map>
+				<entry key="Type" value="Number" />
+				<entry key="Length" value="6" />
+			</map>
+		</entry>
+		<entry key="TICKET_NUM">
+			<map>
+				<entry key="Default" value="ForceExpr: CURRENT_DATE" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="15" />
+			</map>
+		</entry>
+		<entry key="REC_STATUS">
+			<map>
+				<entry key="Default" value="Expr: (SELECT COUNT(*) FROM DUAL)" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="1" />
+			</map>
+		</entry>
+		<entry key="ERROR_DESC">
+			<map>
+				<entry key="Default" value="Something" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="50" />
+			</map>
+		</entry>
+	</util:map>
+	<util:map id="hfRespMapping">
+		<entry key="CUSTOM_COL_2">
+			<map>
+				<entry key="Default" value="Something Else" />
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="3" />
+			</map>
+		</entry>
+		<entry key="PROCESSED_REC">
+			<map>
+				<entry key="Type" value="Number" />
+				<entry key="Length" value="8" />
+			</map>
+		</entry>
+		<entry key="TOTAL_REC">
+			<map>
+				<entry key="Type" value="Number" />
+				<entry key="Length" value="8" />
+			</map>
+		</entry>
+		<entry key="__LM__SKIP_4">
+			<map>
+				<entry key="Skip" value="True" />
+			</map>
+		</entry>
+		<entry key="END_DT">
+			<map>
+				<entry key="Default" value="ForceExpr: CURRENT_DATE" />
+				<entry key="Format" value="MMddyyyy" />
+				<entry key="Type" value="Date" />
+			</map>
+		</entry>
+		<entry key="CUSTOM_COL_8">
+			<map>
+				<entry key="Default" value="Expr: CURRENT_DATE" />
+				<entry key="Type" value="Number" />
+				<entry key="Length" value="8" />
+			</map>
+		</entry>
+		<entry key="CUSTOM_COL_7">
+			<map>
+				<entry key="Type" value="Character" />
+				<entry key="Length" value="1" />
+			</map>
+		</entry>
+	</util:map>
+	<util:map id="alertMap">
+	</util:map>
+	<util:map id="errorMap">
+		<entry key="SBL-FINT-0000">
+			<map>
+				<entry key="SBL-FINT-0000" value="Unknown error: %1" />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0013">
+			<map>
+				<entry key="SBL-FINT-0013" value="All records failed to process." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0001">
+			<map>
+				<entry key="SBL-FINT-0001" value="Field &apos;%1&apos; is marked as required but has no value and is not defaulted." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0014">
+			<map>
+				<entry key="SBL-FINT-0014" value="No default specified for unmapped field &apos;%1&apos;." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0002">
+			<map>
+				<entry key="SBL-FINT-0002" value="Date field &apos;%1&apos; with value of &apos;%2&apos; can not be parsed with format &apos;%3&apos;: %4" />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0011">
+			<map>
+				<entry key="SBL-FINT-0011" value="Engine failed to process transaction. Engine marked record with status &apos;%1&apos;." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0003">
+			<map>
+				<entry key="SBL-FINT-0003" value="Field &apos;%1&apos; with value of &apos;%2&apos; can not be parsed with format &apos;%3&apos;." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0012">
+			<map>
+				<entry key="SBL-FINT-0012" value="Some records failed to process." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0010">
+			<map>
+				<entry key="SBL-FINT-0010" value="EIM failed to import record with error &apos;%1&apos;" />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0008">
+			<map>
+				<entry key="SBL-FINT-0008" value="Field &apos;%1&apos; with value &apos;%2&apos; does not match lookup &apos;%3&apos;." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0009">
+			<map>
+				<entry key="SBL-FINT-0009" value="One or more records with the same ( %1 ) found." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0017">
+			<map>
+				<entry key="SBL-FINT-0017" value="Attempted to process duplicate file." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0004">
+			<map>
+				<entry key="SBL-FINT-0004" value="Field &apos;%1&apos; exceeds its maximum length of %2." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0005">
+			<map>
+				<entry key="SBL-FINT-0005" value="Field &apos;%1&apos; does not match pattern &apos;%2&apos;." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0015">
+			<map>
+				<entry key="SBL-FINT-0015" value="Bad metadata: missing metadata for field &apos;%1&apos;. You need to specify at least Type." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0006">
+			<map>
+				<entry key="SBL-FINT-0006" value="Product &apos;%1&apos; does not exist or it is not offered by partner &apos;%2&apos;." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0016">
+			<map>
+				<entry key="SBL-FINT-0016" value="Bad metadata: type is unknown for field &apos;%1&apos;. Valid types are Character, Number or Date." />
+			</map>
+		</entry>
+		<entry key="SBL-FINT-0007">
+			<map>
+				<entry key="SBL-FINT-0007" value="No active member number found for member number &apos;%1&apos;" />
+			</map>
+		</entry>
+	</util:map>
+	<util:map id="eventMap">
+	</util:map>
+</beans>

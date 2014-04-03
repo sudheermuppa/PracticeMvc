@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+$cmdLine = ". __SIEBSRVR__PATH__/siebenv.sh;__SIEBSRVR__PATH__/bin/srvrmgr ";
+
+while( $p = shift @ARGV ) {
+	$cmdLine .= $p . " ";
+};
+
+system($cmdLine);

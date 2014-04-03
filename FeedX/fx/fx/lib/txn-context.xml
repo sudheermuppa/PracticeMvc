@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+
+	<import resource="classpath:launch-context.xml" />
+	<import resource="classpath:SQLSteps.xml" />
+	<import resource="classpath:module-context.xml" />
+	<import resource="classpath:response-context.xml" />
+	<import resource="classpath:alert-context.xml" />
+	
+	<!-- Job Structure needed for Transaction Processing -->
+
+	<job id="TxnImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<step id="preValidate" parent="preValidateStep" next="decisionPoint"/>
+		<decision id="decisionPoint" decider="revalidationDecider">
+			<next on="REVALIDATE" to="dbRevalidate"/>
+			<next on="*" to="validateTxnMembers"/>
+		</decision>
+		<step id="dbRevalidate" parent="dbRevalidateStep" next="validateTxnMembers"/>
+		<step id="validateTxnMembers" parent="validateTxnMembersStep" next="validateTxnProducts"/>
+		<step id="validateTxnProducts" parent="validateTxnProductsStep" next="checkTxnDuplicates"/>
+		<step id="checkTxnDuplicates" parent="checkTxnDuplicatesStep" next="stageTxnEIM"/>
+		<step id="stageTxnEIM" parent="stageTxnEIMStep" next="runEIM"/>
+		<step id="runEIM" parent="runEIMStep" next="connectTxnIds"/>
+		<step id="connectTxnIds" parent="connectTxnIdsStep" next="waitForLoyEngine"/>
+		<step id="waitForLoyEngine" parent="waitForLoyEngineStep" next="checkEngineProcessing" />
+		<step id="checkEngineProcessing" parent="checkEngineProcessingStep" next="responseDecision"/>
+		<decision id="responseDecision" decider="responseDecider">
+			<next on="RESPONSE" to="genResponse"/>
+			<end on="*" />
+		</decision>
+		<step id="genResponse" parent="genResponseStep" next="sendResponse" />
+		<step id="sendResponse" parent="sendResponseStep" />
+	</job>
+	
+	<!-- Only run validation and EIM, no engine processing will be checked  -->
+
+	<job id="EIMImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<step id="eim_preValidate" parent="preValidateStep" next="eim_decisionPoint"/>
+		<decision id="eim_decisionPoint" decider="revalidationDecider">
+			<next on="REVALIDATE" to="eim_dbRevalidate"/>
+			<next on="*" to="eim_validateTxnMembers"/>
+		</decision>
+		<step id="eim_dbRevalidate" parent="dbRevalidateStep" next="eim_validateTxnMembers"/>
+		<step id="eim_validateTxnMembers" parent="validateTxnMembersStep" next="eim_validateTxnProducts"/>
+		<step id="eim_validateTxnProducts" parent="validateTxnProductsStep" next="eim_checkTxnDuplicates"/>
+		<step id="eim_checkTxnDuplicates" parent="checkTxnDuplicatesStep" next="eim_stageTxnEIM"/>
+		<step id="eim_stageTxnEIM" parent="stageTxnEIMStep" next="eim_runEIM"/>
+		<step id="eim_runEIM" parent="runEIMStep" next="eim_connectTxnIds"/>
+		<step id="eim_connectTxnIds" parent="connectTxnIdsStep" next="eim_responseDecision"/>
+		<decision id="eim_responseDecision" decider="responseDecider">
+			<next on="RESPONSE" to="eim_genResponse"/>
+			<end on="*" />
+		</decision>
+		<step id="eim_genResponse" parent="genResponseStep" next="eim_sendResponse" />
+		<step id="eim_sendResponse" parent="sendResponseStep" />
+	</job>
+	
+	<!-- Just import and validate the file -->
+	
+	<job id="FileImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<step id="file_preValidate" parent="preValidateStep" next="file_decisionPoint"/>
+		<decision id="file_decisionPoint" decider="revalidationDecider">
+			<next on="REVALIDATE" to="file_dbRevalidate"/>
+			<next on="*" to="file_validateTxnMembers"/>
+		</decision>
+		<step id="file_dbRevalidate" parent="dbRevalidateStep" next="file_validateTxnMembers"/>
+		<step id="file_validateTxnMembers" parent="validateTxnMembersStep" next="file_validateTxnProducts"/>
+		<step id="file_validateTxnProducts" parent="validateTxnProductsStep" next="file_checkTxnDuplicates"/>
+		<step id="file_checkTxnDuplicates" parent="checkTxnDuplicatesStep" next="file_responseDecision"/>
+		<decision id="file_responseDecision" decider="responseDecider">
+			<next on="RESPONSE" to="file_genResponse"/>
+			<end on="*" />
+		</decision>
+		<step id="file_genResponse" parent="genResponseStep" next="file_sendResponse" />
+		<step id="file_sendResponse" parent="sendResponseStep" />
+	</job>
+</beans>

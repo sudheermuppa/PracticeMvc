@@ -1,0 +1,5 @@
+#!/bin/sh
+
+source $FX_HOME/bin/env.sh
+java -Duser.timezone=$FX_TIME_ZONE -Dpid=$$ -Dfx.homedir=$FX_HOME -classpath "$FX_HOME/ext:$FX_HOME/conf:$FX_HOME/jobs:$FX_HOME/lib/*:$FX_HOME/lib" com.loyaltymethods.fx.run.RunGetParam $1
+
