@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+
+	<!-- Response File Objects -->
+	
+	<import resource="classpath:listeners-context.xml" />
+	<import resource="classpath:services-context.xml" />
+	<import resource="classpath:dao-context.xml" />
+	
+	<!-- Dependencies on external entities:
+
+		siebelDataSource		- data
+		stepUpdater				- standard listener on all steps
+		errorMap				- for translating errors in the response files
+		sftpManager				- for transport of response if required
+		intFileDAO				- to check for errors in the steps (maybe add to execution context as well?)
+
+	 -->
+	
+	<bean id="respRowMapper" class="com.loyaltymethods.fx.file.ResponseRowMapper">
+		<property name="dtlFields" value="${respDetailFields}" />
+		<property name="dtlPrefix" value="${respDetailPrefix}" />
+	</bean>
+	
+	<bean id="jdbcResponseReader" class="org.springframework.batch.item.database.JdbcCursorItemReader" scope="step">
+		<property name="dataSource" ref="siebelDataSource" />
+		<property name="sql" value="SELECT ${respDetailSelect},'#{jobExecutionContext[fileId]}' AS LM_CTX_FILE_ID FROM SIEBEL.${prestageTable} WHERE FILE_ID = '#{jobExecutionContext[fileId]}'" />
+		<property name="rowMapper" ref="respRowMapper" />
+	</bean>
+	
+	<bean id="errorTranslator" class="com.loyaltymethods.fx.file.ResponseProcessor">
+		<property name="transMap" ref="errorMap" />
+		<property name="errorStatus" value="${status.record.error}" />
+		<property name="processedStatus" value="${status.record.processed}" />
+	</bean>
+	
+	<bean id="responseWriter" class="org.springframework.batch.item.file.FlatFileItemWriter" scope="step">
+		<property name="resource" value="file://${batch.outgoing.path}/#{jobExecutionContext[respFileName]}"/>
+		<property name="lineAggregator" ref="fixedLineAggregator"/>
+		<property name="headerCallback" ref="fixedHeaderFooterCallback" />
+		<property name="footerCallback" ref="fixedHeaderFooterCallback" />
+		<property name="encoding" value="ISO8859_1"/>
+	</bean>
+
+	<!-- Really kludgy workaround because the header callback has to be null in order to avoid an automatic line end on the header -->
+		
+	<bean id="responseWriterWithNullHeader" class="org.springframework.batch.item.file.FlatFileItemWriter" scope="step">
+		<property name="resource" value="file://${batch.outgoing.path}/#{jobExecutionContext[respFileName]}"/>
+		<property name="lineAggregator" ref="fixedLineAggregator"/>
+		<property name="headerCallback" ><null/></property>
+		<property name="footerCallback" ref="fixedHeaderFooterCallback" />
+		<property name="encoding" value="ISO8859_1"/>
+	</bean>
+	
+	<bean id="fixedHeaderFooterCallback" class="com.loyaltymethods.fx.file.ResponseHeaderFooterCallback">
+		<property name="headerSelect" value="${respHeaderSelect}" />
+		<property name="footerSelect" value="${respFooterSelect}" />
+
+		<property name="headerFields" value="${respHeaderFields}" />
+		<property name="footerFields" value="${respFooterFields}" />
+		<property name="headerPrefix" value="${respHeaderPrefix}" />
+		<property name="footerPrefix" value="${respFooterPrefix}" />
+		<property name="headerFormat" value="${respHeaderFixedFormat}" />
+		<property name="footerFormat" value="${respFooterFixedFormat}" />
+		<property name="intFile" ref="intFileDAO" />
+	</bean>	
+
+	<bean id="fixedLineAggregator" class="org.springframework.batch.item.file.transform.FormatterLineAggregator" scope="step">
+		<property name="fieldExtractor" ref="passThroughExtractor"/>
+		<property name="format" value="${respDetailFixedFormat}"/>
+	</bean>
+	
+	<bean id="passThroughExtractor" class="org.springframework.batch.item.file.transform.PassThroughFieldExtractor"/>
+	
+	<step id="genResponseStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true">
+			<chunk reader="jdbcResponseReader" processor="errorTranslator" writer="${responseWriter}" commit-interval="500"/>
+		</tasklet>		
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+	
+	<step id="sendResponseStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="false">
+			<bean id="sftpAdapter" scope="step" class="org.springframework.batch.core.step.tasklet.MethodInvokingTaskletAdapter" xmlns="http://www.springframework.org/schema/beans">
+				<property name="targetObject" ref="ftpManager"/>
+				<property name="targetMethod" value="upload"/>
+				<property name="arguments">
+					<array>
+						<value>${batch.outgoing.path}/#{jobExecutionContext[respFileName]}</value>
+					</array>
+				</property>
+			</bean>
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+	
+	<bean id="responseDecider" class="com.loyaltymethods.fx.step.ResponseDecider">
+		<property name="intFile" ref="intFileDAO"/> 
+		<property name="genResponse" value="${genResponse}"/>
+		<property name="totalErrorThreshold" value="${job.error.threshold}"/>
+	</bean> 
+</beans>

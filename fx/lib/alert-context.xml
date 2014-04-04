@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- 
+		Dependencies:
+		
+		alertMap - defined in the integration XML file.
+	 -->
+
+   <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="${mail.host}"/>
+        <property name="port" value="${mail.port}"/>
+        <property name="username" value="${mail.auth.username}"/>
+        <property name="password" value="${mail.auth.password}"/>
+        <property name="javaMailProperties">
+            <props>
+                <!-- Use SMTP transport protocol -->
+                <prop key="mail.transport.protocol">smtp</prop>
+                <!-- Use SMTP-AUTH to authenticate to SMTP server -->
+                <prop key="mail.smtp.auth">${mail.authenticate}</prop>
+                <!-- Use TLS to encrypt communication with SMTP server -->
+                <prop key="mail.smtp.starttls.enable">${mail.enableTLS}</prop>
+                <prop key="mail.debug">false</prop>
+            </props>
+        </property>
+    </bean>
+    
+	<bean id="alertMailMessage" class="org.springframework.mail.SimpleMailMessage">
+        <property name="from">            
+            <value>${mail.message.from}</value>
+        </property>
+    </bean>
+    
+    <bean id="alertManager" class="com.loyaltymethods.fx.run.AlertManager">
+    	<property name="alerts" ref="alertMap"/>
+    	<property name="alertMessage" ref="alertMailMessage"/>
+    	<property name="mailSender" ref="mailSender"/>
+    </bean>
+</beans>

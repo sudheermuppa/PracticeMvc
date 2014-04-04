@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+
+	<import resource="classpath:file-parsing-context.xml" />
+	<import resource="classpath:sqlstep-context.xml" />
+	<import resource="classpath:step-context.xml" />
+	<import resource="classpath:revalidate-context.xml" />
+	<import resource="classpath:response-context.xml" />
+	<import resource="classpath:integration-context.xml" />
+	
+	<!-- Member Enrollment Workflow -->
+	
+	<job id="MbrImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<flow id="MemberEnrollment.importFlow" parent="commonFileFlow" next="MemberEnrollment.workflowFlow"/>
+		<flow id="MemberEnrollment.workflowFlow" parent="allProcessingFlow" next="MemberEnrollment.responseFlow"/>
+		<flow id="MemberEnrollment.responseFlow" parent="commonResponseFlow"/>
+	</job>
+	
+	<!-- Generic import and response flows -->
+	
+	<flow id="commonFileFlow" xmlns="http://www.springframework.org/schema/batch">
+		<step id="file_preValidate" parent="preValidateStep" next="file_decisionPoint"/>
+		<decision id="file_decisionPoint" decider="revalidationDecider">
+			<next on="REVALIDATE" to="file_dbRevalidate"/>
+			<end on="*"/> 
+		</decision>
+		<step id="file_dbRevalidate" parent="dbRevalidateStep"/>
+	</flow>
+	
+	<flow id="allProcessingFlow" xmlns="http://www.springframework.org/schema/batch">
+		<step id="AllProc_runWorkflow" parent="wFTasklet" />
+	</flow>
+	
+	<flow id="commonResponseFlow" xmlns="http://www.springframework.org/schema/batch">
+		<decision id="file_responseDecision" decider="responseDecider">
+			<next on="RESPONSE" to="file_genResponse"/>
+			<end on="*" />
+		</decision>
+		<step id="file_genResponse" parent="genResponseStep" next="file_sendResponse" />
+		<step id="file_sendResponse" parent="sendResponseStep" />
+	</flow>
+	
+	<!-- Configure 3 different types of EIM - Accrual, Redemption and All -->
+	
+	<step id="wFTasklet" abstract="true"  xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true">
+			<bean id="wFTaskletBean"  scope="step" parent="abstractWorkflowBean"  xmlns="http://www.springframework.org/schema/beans"/> 	
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+			<!-- This workflowStepListener must be placed at last in list of listeners, 
+			so that afterStep() of this listener will be executed before all other listeners  -->
+			<listener ref="workflowStepListener"/>			
+		</listeners>
+	</step>
+	
+	<!-- Stage Name Mappings and Step Status Updater -->
+	<bean id="workflowStepListener" class="com.loyaltymethods.fx.step.WorkflowStepListener">
+		<property name="intFileDAO" ref="intFileDAO"/>
+	</bean>
+		
+<!-- Abstract Workflow beans below -->
+		
+	<bean id="abstractWorkflowBean" parent="abstractSrvrMgrTasklet" abstract="true" class="com.loyaltymethods.fx.step.WFTasklet" xmlns="http://www.springframework.org/schema/beans">
+		<property name="intFileDAO" ref="intFileDAO"/>
+		<property name="rerun" value="#{jobExecutionContext['isRerun']}"/>
+		<property name="component" value="WfProcBatchMgr"/>
+		<property name="processName" value="LM FINT Enroll Member"/>
+		<property name="searchSpec" value="[File Id]=\'#{jobExecutionContext['fileId']}\' AND [Record Status]=\'Prestaged\'"/>
+		<property name="command" value="#{ null }"/>
+		<!-- <property name="command" value="start task for comp WfProcBatchMgr with ProcessName='LM FINT Enroll Member',SearchSpec='[File Id]=\'#{jobExecutionContext['fileId']}\' AND [Record Status]=\'Prestaged\''"/> -->
+		<!-- <property name="command" value="start task for comp WfProcMgr with ProcessName='LM FINT Test',RowId=#{jobExecutionContext['fileId']}"/> -->
+	</bean>
+</beans>

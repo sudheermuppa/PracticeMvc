@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+$num = `date +%N`;
+open(F, ">$ARGV[0]$num" ) || die "Could not create test file $ARGV[0]: $!";
+
+$REC = 10;
+$POINT_LIMIT = 3500;
+
+@mem_nums = (
+"1-142222" );
+
+for( $i = 0; $i<$REC; $i++ ) {
+        $points = $i % $POINT_LIMIT+1;
+        $sec=`date +%N`;
+        chomp $sec;
+        $day = $i % 20+1;
+        $member = $mem_nums[$i % @mem_nums];
+        print F "$member|Txn$sec|$i|$points|Jun/$day/2012 11:11:19\n";
+}
+
+print F "T|800|06/02/2012 00:00:00\n";
+close F;

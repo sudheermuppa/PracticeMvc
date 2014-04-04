@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.0.xsd">
+
+   <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="smtp.gmail.com"/>
+        <property name="port" value="587"/>
+        <property name="username" value="emil.sarkissian@gmail.com"/>
+        <property name="password" value="dictate"/>
+        <property name="javaMailProperties">
+            <props>
+                <!-- Use SMTP transport protocol -->
+                <prop key="mail.transport.protocol">smtp</prop>
+                <!-- Use SMTP-AUTH to authenticate to SMTP server -->
+                <prop key="mail.smtp.auth">true</prop>
+                <!-- Use TLS to encrypt communication with SMTP server -->
+                <prop key="mail.smtp.starttls.enable">true</prop>
+                <prop key="mail.debug">true</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <bean id="alertMailMessage" class="org.springframework.mail.SimpleMailMessage">
+        <property name="from">            
+            <value>myusername@gmail.com</value>
+        </property>
+        <property name="to">            
+            <value>esarkissian@loyaltymethods.com</value>
+        </property>
+        <property name="subject" value="Alert - Exception occurred. Please investigate"/>
+    </bean>
+</beans>

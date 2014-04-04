@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<import resource="classpath:dao-context.xml"/>
+	<import resource="classpath:services-context.xml"/>
+
+	<!-- Step/Job Listeners -->
+	
+	<bean id="jobInitializer" class="com.loyaltymethods.fx.file.FileJobListener">
+		<property name="intFileDAO" ref="intFileDAO"/>
+		<property name="totalErrorThreshold" value="${job.error.threshold}"/>
+		<property name="alerts" ref="alertManager"/>
+		<property name="events" ref="eventManager"/>
+		<property name="errors" ref="errorManager"/>
+	</bean>
+	
+	<!-- Stage Name Mappings and Step Status Updater -->
+	
+	<bean id="stepUpdater" class="com.loyaltymethods.fx.file.FileStepListener">
+		<property name="intFileDAO" ref="intFileDAO"/>
+		<property name="demoSleep" value="${demo.sleep}"/>
+		<property name="events" ref="eventManager"/>
+		<property name="responseSuffix" value="${response.suffix}"/>
+		
+		<property name="nameToStage">
+			<map>
+				<entry key="preValidate" value="File Validation" />
+				<entry key="dbRevalidate" value="DB Revalidation" />
+				<entry key="validateTxnProducts" value="Product Validation"/>
+				<entry key="validateTxnMembers" value="Member Validation"/>
+				<entry key="checkTxnDuplicates" value="Duplicate Check"/>
+				<entry key="stageTxnEIM" value="EIM Staging"/>
+				<entry key="runAllEIM" value="EIM Execution"/>
+				<entry key="runAccrualEIM" value="EIM Accruals"/>
+				<entry key="runRedemptionEIM" value="EIM Redemptions"/>
+				<entry key="waitForLoyEngine" value="Engine Wait"/>
+				<entry key="connectTxnIds" value="ID Linkage"/>
+				<entry key="checkEngineProcessing" value="Engine Verify"/>
+				<entry key="genResponse" value="Response Generation"/>
+				<entry key="sendResponse" value="Response SFTP"/>
+				<entry key="updateStatus" value="Row Satatus Update"/>
+			</map>
+		</property>
+	</bean>
+</beans>

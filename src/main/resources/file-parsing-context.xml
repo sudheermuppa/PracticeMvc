@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<import resource="classpath:launch-context.xml"/>
+	<import resource="classpath:services-context.xml"/>
+	<import resource="classpath:dao-context.xml"/>		
+	
+	<!-- File parsing components -->
+	
+	<!-- Flat File Reader -->
+
+	<bean id="reader" class="org.springframework.batch.item.file.FlatFileItemReader" scope="step">
+		<property name="resource" value="file://${batch.incoming.path}/#{jobExecutionContext['fileName']}"/>
+		<property name="recordSeparatorPolicy" ref="separatorPolicy"/>
+		<property name="lineMapper" ref="lineMapper"/>
+ 		<property name="linesToSkip" value="${skipLines}"/> 
+ 		<property name="skippedLinesCallback" ref="headerFooterFilter"/> 
+ 		<property name="encoding" value="ISO8859_1"></property>
+	</bean>
+	
+	<bean id="separatorPolicy" class="org.springframework.batch.item.file.separator.DefaultRecordSeparatorPolicy"/>
+	
+	<bean id="lineMapper" class="org.springframework.batch.item.file.mapping.PatternMatchingCompositeLineMapper">
+		<property name="tokenizers">
+			<map>
+				<entry key="${dtlPattern}" value-ref="${dtlTokenizer}" />
+				<entry key="${hdrPattern}" value-ref="${hdrTokenizer}" />
+				<entry key="${ftrPattern}" value-ref="${ftrTokenizer}" />
+			</map>
+		</property>
+		<property name="fieldSetMappers">
+			<map>
+				<entry key="${dtlPattern}" value-ref="detailFieldSetMapper" />
+				<entry key="${hdrPattern}" value-ref="hfFieldSetMapper" />
+				<entry key="${ftrPattern}" value-ref="hfFieldSetMapper" />
+			</map>
+		</property>
+	</bean>
+
+	<!-- Delimited and Fixed Tokenizers -->
+	
+	<bean id="detailDelimitedTokenizer" class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+		<property name="delimiter" value="${delimiter}"/>
+		<property name="names" value="${dtlFields}"/> 
+	</bean>
+
+	<bean id="headerDelimitedTokenizer" class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+		<property name="delimiter" value="${delimiter}"/>
+		<property name="names" value="${hdrFields}" />
+	</bean>
+	
+	<bean id="footerDelimitedTokenizer" class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+		<property name="delimiter" value="${delimiter}"/>
+		<property name="names" value="${ftrFields}" />
+	</bean>
+	
+	<!-- Fixed Width Tokenizers -->
+	
+	<bean id="detailFixedTokenizer" class="org.springframework.batch.item.file.transform.FixedLengthTokenizer">
+		<property name="columns" value="${dtlFixedCols}"/>
+		<property name="strict" value="false"/>
+		<property name="names" value="${dtlFields}"/> 
+	</bean>
+		
+	<bean id="headerFixedTokenizer" class="org.springframework.batch.item.file.transform.FixedLengthTokenizer">
+		<property name="columns" value="${hdrFixedCols}"/>
+		<property name="strict" value="false"/>
+		<property name="names" value="${hdrFields}"/> 
+	</bean>
+
+	<bean id="footerFixedTokenizer" class="org.springframework.batch.item.file.transform.FixedLengthTokenizer">
+		<property name="columns" value="${ftrFixedCols}"/>
+		<property name="strict" value="false"/>
+		<property name="names" value="${ftrFields}"/> 
+	</bean>
+
+	<!-- Field Set Mappers -->
+
+	<bean name="detailFieldSetMapper" class="org.springframework.batch.item.file.mapping.PassThroughFieldSetMapper" />	
+	
+	<bean name="hfFieldSetMapper" class="com.loyaltymethods.fx.file.HeaderFooterInputMapper" >
+	
+		<!-- We add these fields to distinguish the record type regardless of what REC_TYPE says.
+			 Internally, the hfFieldSetMapper will add these fields to the output stream, 
+			 so that the HeaderFooterFilter can filter out the header and footer from being written out. 
+			 
+			 The HeaderFooterFilter actually is the one who would sync CX_FINT_FILE with any header/footer
+			 fields that were mapped. 
+		-->
+		
+		<property name="addFields">
+			<map>
+				<entry key="HEADER_FLG" value="true"/>
+				<entry key="FOOTER_FLG" value="true"/>
+			</map>
+		</property>
+	</bean>
+	
+	<!-- Composite processor: we do two things here:
+	
+		1) Filter out header/footer fields (by using HEADER_FLG/FOOTER_FLG value). Also update CX_FINT_FILE.
+		2) Process the input data for any validations that can be done without database access.
+	
+	 -->
+
+	<bean id="processor" class="org.springframework.batch.item.support.CompositeItemProcessor">
+		<property name="delegates">
+			<list>
+				<ref bean="headerFooterFilter" />
+				<ref bean="flatFileValidator" />
+			</list>
+		</property>
+	</bean>	
+	
+	<bean id="expressionProcessor" class="com.loyaltymethods.fx.file.ExpressionProcessor">
+		<property name="userKey" value="${userKey}"/>
+	</bean>
+
+	<bean id="headerFooterFilter" class="com.loyaltymethods.fx.file.HeaderFooterFilter">
+		<property name="intFileDAO" ref="intFileDAO"/>
+		<property name="hfMapping" ref="hfMapping"/>
+		<property name="headerTokenizer" ref="${hdrTokenizer}"/>
+		<property name="flatFileValidator">
+			<bean id="headerFooterValidator" class="com.loyaltymethods.fx.file.FlatFileValidator">
+				<property name="typed" value="true"/>
+				<property name="validations" ref="dtlMapping"/>
+				<property name="lovCache" ref="lovCacheDAO"/>
+				<property name="errors" ref="errorManager"/>
+				<property name="timeZone" value="${misc.timezone}"/>
+			</bean>
+		</property>
+	</bean>
+	
+	<!-- Processor to run through the validations and annotate records accordingly  -->
+	
+	<bean id="flatFileValidator" class="com.loyaltymethods.fx.file.FlatFileValidator" scope="step">
+		<property name="typed" value="false"/>
+		<property name="validations" ref="dtlMapping"/>
+		<property name="lovCache" ref="lovCacheDAO"/>
+		<property name="rerun" value="#{jobExecutionContext['Rerun']}"/>
+		<property name="errors" ref="errorManager"/>
+		<property name="timeZone" value="${misc.timezone}"/>
+	</bean>
+
+	<!-- File-to-Database Writers - one for INSERT (during initial file processing) and UPDATE (during re-processing) -->
+
+	<bean id="insertWriter" class="com.loyaltymethods.fx.file.PrestageWriter" scope="step">
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="targetTable" value="${prestageTable}"/>
+		<property name="operation" value="INSERT"/>
+		<property name="fileId" value="#{jobExecutionContext['fileId']}"/>
+	</bean>
+	
+</beans>

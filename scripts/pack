@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+
+print "Packing...\n";
+
+system("rm fx.*");
+system("mvn -f ../pom.xml package -Dmaven.test.skip=true");
+
+system("cp ../src/main/resources/log4j.properties ../fx/conf/log4j_win.properties");
+system("cp ../src/main/resources/batch.properties ../fx/conf/batch_win.properties");
+system("cp ../target/*.jar ../fx/lib");
+system("cp ../target/lib/*.jar ../fx/lib");
+system("rm ../fx/logs/*");
+system("cp ../src/main/resources/*.xml ../fx/lib");
+system("cp ../sql/*.xml ../fx/lib");
+system("tar cvf fx.tar ../fx/*; zip fx.zip fx.tar");

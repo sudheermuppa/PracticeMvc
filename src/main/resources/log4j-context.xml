@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="fxLogger" class="com.loyaltymethods.fx.log.util.FXLogger" init-method="onInit" destroy-method="onDestroy">
+		<!-- The 'log4jConfigurationFile' & 'destLogFolder' values will be populated at runtime by Spring Expression Language (SpEL) with 'fx.homedir' system property  -->
+		<property name="log4jConfigurationFile" value="#{ systemProperties['fx.homedir'] }/conf/log4j.xml"/>
+		<property name="layoutPattern" value="%d %-5p %-17c (%F:%L) - %m%n"/> <!-- %d %-5p [%3x] %-17c (%F:%L) - %m%n -->
+		<property name="destLogFolder" value="#{ systemProperties['fx.homedir'] }/logs/"/>
+		<property name="logFilePrefix" value=""/>
+		<!-- 
+			Configuring the NDCMatchFilter creates its own log file for each unique NDC value. [i.e. <property name="ndcMatchFilter" ref="ndcMatchFilter"/>]
+			Set ndcMatchFilter to null disable filtering by NDC value. [i.e. <property name="ndcMatchFilter" value="#{ null }"/>] 
+		-->
+		<property name="ndcMatchFilter" ref="ndcMatchFilter"/>
+		<!-- 
+			Configuring the LoggerMatchFilter creates its own log file for each unique logger. [i.e. <property name="loggerMatchFilter" ref="loggerMatchFilter"/>]
+			Set loggerMatchFilter to null disable filtering by logger. [i.e. <property name="loggerMatchFilter" value="#{ null }"/>] 
+		-->		
+		<property name="loggerMatchFilter" ref="loggerMatchFilter"/>
+	</bean>
+	<bean id="ndcMatchFilter" class="com.loyaltymethods.fx.log.util.NDCMatchFilter">
+		<property name="acceptOnMatch" value="true"/>
+		<property name="exactMatch" value="true"/>
+		<property name="valueToMatch" value="MyNDC#"/> <!-- This valueToMatch property is ignored when exactMatch set to true  -->
+		<property name="next" ref="levelRangeFilter"/>
+	</bean>
+	<bean id="loggerMatchFilter" class="com.loyaltymethods.fx.log.util.LoggerMatchFilter">
+		<property name="acceptOnMatch" value="true"/>
+		<property name="exactMatch" value="true"/>
+		<property name="loggerToMatch" value="FX_LOG"/> <!-- This valueToMatch property is ignored when exactMatch set to true  -->
+		<property name="next" ref="levelRangeFilter"/>
+	</bean>	
+	<bean id="levelRangeFilter" class="org.apache.log4j.varia.LevelRangeFilter">
+		<property name="levelMin" value="DEBUG"/>
+		<property name="levelMax" value="FATAL"/>
+	</bean>
+	<bean id="levelMatchFilter" class="org.apache.log4j.varia.LevelMatchFilter">
+		<property name="levelToMatch" value="INFO"/>
+		<property name="acceptOnMatch" value="true"/>
+		<property name="next" ref="denyAllFilter"/>
+	</bean>		
+	<bean id="stringMatchFilter" class="org.apache.log4j.varia.StringMatchFilter">
+		<property name="stringToMatch" value="dfsdsffdd"/>
+		<property name="acceptOnMatch" value="true"/>
+		<property name="next" ref="denyAllFilter"/>
+	</bean>	
+	<bean id="denyAllFilter" class="org.apache.log4j.varia.DenyAllFilter"/>
+</beans>

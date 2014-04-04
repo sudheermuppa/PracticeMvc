@@ -1,0 +1,8 @@
+*.class
+*.jar
+target/
+/bin/
+fx.tar
+fx.zip
+*.tar
+*.log

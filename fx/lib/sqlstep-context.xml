@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:b="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+	
+	<import resource="classpath:launch-context.xml"/>
+	<import resource="classpath:listeners-context.xml"/>
+	
+	<!-- Defines all the actual Job Steps for the SQL beans -->
+	
+	<step id="updateStatusStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<b:bean id="updateStatusBean" parent="updateStatusSQL" scope="step" />
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+	
+	
+	<step id="validateTxnMembersStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<b:bean id="checkTxnMembersBean" parent="checkTxnMembersSQL" scope="step" />
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+
+	<step id="validateTxnProductsStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<b:bean id="checkTxnPdocutsBean" parent="checkTxnProductsSQL" scope="step" />
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+
+	<step id="stageTxnEIMStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<b:bean id="stageTxnEIMBean" parent="stageTxnEIMSQL" scope="step" />
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>	
+
+	<step id="connectTxnIdsStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<b:bean id="connectTxnIdsBean" parent="connectTxnIdsSQL" scope="step"/>
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>	
+
+	<step id="checkEngineProcessingStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<b:bean id="checkEngineProcessingBean" parent="checkEngineProcessingSQL" scope="step"/>
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>	
+	
+	<step id="checkTxnDuplicatesStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true"> 	
+			<b:bean id="checkTxnDuplicatesBean" parent="checkTxnDuplicatesSQL" scope="step"/>
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>	
+	
+
+	<!-- Defines all the dynamic SQL beans with ties to their templates -->
+
+	<bean id="checkTxnDuplicatesSQL" class="com.loyaltymethods.fx.step.DynSQLStep" abstract="true" >
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="template" value="LM_CHECK_TXN_DUPLICATES.sql"/>
+		<property name="inParams">
+			<map>
+				<entry key="IN_FILE_ID:String" value="#{jobExecutionContext['fileId']}"/>
+				<entry key="USER_KEY:String" value="${userKey}"/>
+				<entry key="IN_PARTNER_NAME:String" value="${partnerName}"/>
+			</map>
+		</property>
+	</bean>
+
+	<bean id="checkTxnMembersSQL" class="com.loyaltymethods.fx.step.DynSQLStep" abstract="true" >
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="template" value="LM_CHECK_TXN_MEMBERS.sql"/>
+		<property name="inParams">
+			<map>
+				<entry key="IN_FILE_ID:String" value="#{jobExecutionContext['fileId']}"/>
+				<entry key="IN_PROG_NAME:String" value="${programName}"/>
+			</map>
+		</property>
+		<property name="subs">
+			<map>
+				<entry key="PrestageTable" value="${prestageTable}"/>
+				<entry key="MemberNumberColumn" value="${memberNumberColumn}"/>
+				<entry key="PiggyBackUpdate" value="${piggyBackUpdate}"/>
+				<entry key="MemberStatusList" value="${memberStatusList}"/>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="checkTxnProductsSQL" class="com.loyaltymethods.fx.step.DynSQLStep" abstract="true" >
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="template" value="LM_CHECK_TXN_PRODUCTS.sql"/>
+		<property name="inParams">
+			<map>
+				<entry key="IN_FILE_ID:String" value="#{jobExecutionContext['fileId']}"/>
+				<entry key="IN_PROG_NAME:String" value="${programName}"/>
+				<entry key="IN_PARTNER_NAME:String" value="${partnerName}"/>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="stageTxnEIMSQL" class="com.loyaltymethods.fx.step.EIMStagingDynSQLStep" abstract="true" >
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="template" value="LM_STAGE_TXN_EIM_GENERIC.sql"/>
+		<property name="inParams">
+			<map>
+				<entry key="IN_FILE_ID:String" value="#{jobExecutionContext['fileId']}"/>
+			</map>
+		</property>
+		<property name="mapping" ref="dtlMapping"/>
+		<property name="subs">
+			<map>
+				<entry key="PrestageTable" value="${prestageTable}"/>
+				<entry key="EIMTable" value="${eimTable}"/>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="connectTxnIdsSQL" class="com.loyaltymethods.fx.step.DynSQLStep" abstract="true" >
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="template" value="LM_CONNECT_TXN_IDS.sql"/>
+		<property name="inParams">
+			<map>
+				<entry key="IN_FILE_ID:String" value="#{jobExecutionContext['fileId']}"/>
+			</map>
+		</property>
+		<property name="subs">
+			<map>
+				<entry key="EIMRowIdColumn" value="${eimRowIdColumn}"/>
+				<entry key="EIMConnectingColumn" value="${eimConnectingColumn}"/>
+				<entry key="PrestageTable" value="${prestageTable}"/>
+				<entry key="EIMTable" value="${eimTable}"/>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="checkEngineProcessingSQL" class="com.loyaltymethods.fx.step.DynSQLStep" abstract="true" >
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="template" value="LM_CHECK_ENGINE_PROCESSING.sql"/>
+		<property name="inParams">
+			<map>
+				<entry key="IN_FILE_ID:String" value="#{jobExecutionContext['fileId']}"/>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="updateStatusSQL" class="com.loyaltymethods.fx.step.DynSQLStep" abstract="true" >
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="template" value="LM_STATUS_UPDATE.sql"/>
+		<property name="inParams">
+			<map>
+			</map>
+		</property>
+		<property name="subs">
+			<map>
+				<entry key="FileId" value="#{jobExecutionContext['fileId']}"/>
+				<entry key="PrestageTable" value="${prestageTable}"/>
+				<entry key="FromStatus" value="'Prestaged','Loaded'"/>
+				<entry key="ToStatus" value="'Processed'"/>
+			</map>
+		</property>
+
+	</bean>
+	
+</beans>

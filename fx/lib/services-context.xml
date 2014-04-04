@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	<!-- Global Services -->
+	
+	<import resource="classpath:launch-context.xml"/>
+	
+	<!-- Event manager -->
+	
+	<bean id="eventManager" class="com.loyaltymethods.fx.run.EventManager">
+		<property name="eventMap" ref="eventMap"/>
+	</bean>
+	
+	<!-- FTP Manager -->
+	
+	<bean id="ftpManager" class="com.loyaltymethods.fx.run.SFTPManager">
+		<property name="ftpURL" value="${ftpURL}"/>
+		<property name="login" value="${ftpLogin}"/>
+		<property name="password" value="${ftpPassword}"/>
+		<property name="remotePath" value="${ftpRemotePath}"/>
+		<property name="authType" value="${ftpAuthType}"/>
+		<property name="localSourceDirectory" value="${batch.incoming.path}"/>
+		<property name="localRespDirectory" value="${batch.outgoing.path}"/>
+		<property name="remoteRespPath" value="${ftpRemoteRespPath}"/>
+		<property name="renameSuffix" value="${ftpRenameSuffix}"/>
+		<property name="downloadAction" value="${ftpDownloadAction}"/>
+	</bean>
+	
+	<!-- Error message management -->
+	
+	<bean id="errorManager" class="com.loyaltymethods.fx.data.ErrorDAO">
+		<property name="sblDS" ref="siebelDataSource"/>
+	</bean>	
+	
+	<!-- Alert management -->
+	
+   <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="${mail.host}"/>
+        <property name="port" value="${mail.port}"/>
+        <property name="username" value="${mail.auth.username}"/>
+        <property name="password">
+			<util:property-path path="passwordManager.mailPassword"/>
+        </property>
+        <property name="javaMailProperties">
+            <props>
+                <!-- Use SMTP transport protocol -->
+                <prop key="mail.transport.protocol">smtp</prop>
+                <!-- Use SMTP-AUTH to authenticate to SMTP server -->
+                <prop key="mail.smtp.auth">${mail.authenticate}</prop>
+                <!-- Use TLS to encrypt communication with SMTP server -->
+                <prop key="mail.smtp.starttls.enable">${mail.enableTLS}</prop>
+                <prop key="mail.debug">false</prop>
+            </props>
+        </property>
+    </bean>
+    
+	<bean id="alertMailMessage" class="org.springframework.mail.SimpleMailMessage">
+        <property name="from">            
+            <value>${mail.message.from}</value>
+        </property>
+    </bean>
+    
+    <bean id="alertManager" class="com.loyaltymethods.fx.run.AlertManager">
+    	<property name="alerts" ref="alertMap"/>
+    	<property name="alertMessage" ref="alertMailMessage"/>
+    	<property name="mailSender" ref="mailSender"/>
+    </bean>	
+</beans>

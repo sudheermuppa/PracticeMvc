@@ -1,0 +1,20 @@
+; FeedXChange Loyalty Transaction IFB File
+; Copyright(c) 2007-2012 by Loyalty Methods, Inc. All rights reserved.
+
+[Siebel Interface Manager]
+	PROCESS = FX IMPORT TXN
+
+[FX IMPORT TXN]
+	TYPE = IMPORT
+	BATCH = $BatchRange
+	FILTER QUERY=(TYPE_CD = $f1 OR TYPE_CD = $f2)
+	TABLE = EIM_LOY_TXN
+	UPDATE STATISTICS = FALSE
+
+	INSERT ROWS = S_LOY_BCKT_TXN, FALSE
+    INSERT ROWS = S_LOY_SR_TXN, FALSE
+    INSERT ROWS = S_LOY_TXN_ITEM, FALSE
+    UPDATE ROWS = S_LOY_TXN, FALSE
+    UPDATE ROWS = S_LOY_TXN_BU, FALSE
+    
+    ONLY BASE TABLES = S_LOY_TXN, S_LOY_TXN_BU

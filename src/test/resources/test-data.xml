@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<bean id="ParamGenTest" class="com.loyaltymethods.fx.test.ParamGenTest">
+		<property name="listOfDBInserts">
+			<list>
+				<bean class="com.loyaltymethods.fx.test.common.DBInsert">
+					<property name="insertStatement" value="insert into CX_FINT_SETUP (ROW_ID, NAME, VALUE, CREATED_BY, LAST_UPD_BY) values (:ROW_ID, :NAME, :VALUE, :CREATED_BY, :LAST_UPD_BY)"></property>
+					<property name="listOfRecords">
+						<list>
+							<map>
+								<entry key="ROW_ID" value="aTestRowID" />
+								<entry key="NAME" value="batch.conf.path" />
+								<entry key="VALUE" value="c:\\temp.fxtests"/>
+								<entry key="CREATED_BY" value="RK"/>
+								<entry key="LAST_UPD_BY" value="RK"/>
+							</map>						
+							<map>
+								<entry key="ROW_ID" value="aTestRowID" />
+								<entry key="NAME" value="test.property" />
+								<entry key="VALUE" value="compare.after.test"/>
+								<entry key="CREATED_BY" value="RK"/>
+								<entry key="LAST_UPD_BY" value="RK"/>
+							</map>							
+						</list>
+					</property>
+				</bean>
+			</list>
+		</property>
+		<property name="additionalArgsMap">
+			<map>
+				<entry key="PATH_TO_GENERATED_BUILD_PROPERTIES_FILE" value="c:\\temp.fxtests\\batch.properties" />
+				<entry key="VALUE_TO_BE_COMPARED" value="compare.after.test" />
+			</map>
+		</property>
+	</bean>
+	<bean id="MetaGenTest" class="com.loyaltymethods.fx.test.MetaGenTest">
+		<property name="listOfDBInserts">
+			<list>
+				<bean class="com.loyaltymethods.fx.test.common.DBInsert">
+					<property name="insertStatement" value="insert into CX_FINT_INTG (ROW_ID, CREATED_BY, LAST_UPD_BY, NAME, PARTNER_ID, PROGRAM_ID, STATUS, TYPE, IN_TEMPLATE_ID) values (:ROW_ID, :CREATED_BY, :LAST_UPD_BY, :NAME, :PARTNER_ID, :PROGRAM_ID, :STATUS, :TYPE, :IN_TEMPLATE_ID)"></property>
+					<property name="listOfRecords">
+						<list>
+							<map>
+								<entry key="ROW_ID" value="aTestRowID" />
+								<entry key="CREATED_BY" value="RK"/>
+								<entry key="LAST_UPD_BY" value="RK"/>
+								<entry key="NAME" value="OSTAR" />
+								<entry key="PARTNER_ID" value="1"/>
+								<entry key="PROGRAM_ID" value="2"/>
+								<entry key="STATUS" value="s"/>
+								<entry key="TYPE" value="t"/>
+								<entry key="IN_TEMPLATE_ID" value="aTmpltId"/>
+							</map>						
+						</list>
+					</property>
+				</bean>
+				<bean class="com.loyaltymethods.fx.test.common.DBInsert">
+					<property name="insertStatement" value="insert into CX_FINT_TMPL (ROW_ID, CREATED_BY, LAST_UPD_BY, NAME, STATUS, FILE_FORMAT, FILE_DELIMITER, STG_TBL_NAME) values (:ROW_ID, :CREATED_BY, :LAST_UPD_BY, :NAME, :STATUS, :FILE_FORMAT, :FILE_DELIMITER, :STG_TBL_NAME)"></property>
+					<property name="listOfRecords">
+						<list>
+							<map>
+								<entry key="ROW_ID" value="aTmpltId" />
+								<entry key="CREATED_BY" value="RK"/>
+								<entry key="LAST_UPD_BY" value="RK"/>
+								<entry key="NAME" value="aTmpltName" />
+								<entry key="STATUS" value="s"/>
+								<entry key="FILE_FORMAT" value="Delimited"/>
+								<entry key="FILE_DELIMITER" value=","/>
+								<entry key="STG_TBL_NAME" value="CX_FINT_TXN"/>
+								<entry key="" value=""/>
+								<entry key="" value=""/>
+								<entry key="" value=""/>
+								<entry key="" value=""/>
+								<entry key="" value=""/>
+								<entry key="" value=""/>
+								<entry key="" value=""/>
+								<entry key="" value=""/>
+							</map>						
+						</list>
+					</property>
+				</bean>				
+			</list>
+		</property>
+		<property name="additionalArgsMap">
+			<map>
+				<entry key="PATH_TO_GENERATED_BUILD_PROPERTIES_FILE" value="c:\\temp.fxtests\\batch.properties" />
+				<entry key="VALUE_TO_BE_COMPARED" value="compare.after.test" />
+			</map>
+		</property>
+	</bean>	
+</beans>

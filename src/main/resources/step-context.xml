@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:b="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-2.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<!-- Utilizes Bean definition inheritance feature -->
+
+	<bean id="abstractSrvrMgrTasklet" abstract="true" xmlns="http://www.springframework.org/schema/beans">
+		<property name="srvrmgrPath" value="${srvrmgr.executable.path}"/>
+		<property name="siebelUser" value="${srvrmgr.param.username}"/>
+		<property name="siebelPwd">
+			<util:property-path path="passwordManager.srvrmgrPassword"/>
+		</property>
+		<property name="siebelGateway" value="${srvrmgr.param.gateway}"/>
+		<property name="siebelServer" value="${srvrmgr.param.server}"/>
+		<property name="siebelEnterprise" value="${srvrmgr.param.enterprise}"/>
+		<property name="sleepInterval" value="${eim.status.interval}"/>
+		<property name="retryMaxCount" value="${eim.status.timeout}"/>
+	</bean>
+	
+	<!-- Initial validation and revalidation logic that uses chunks -->
+
+	<step id="preValidateStep" abstract="true"  xmlns="http://www.springframework.org/schema/batch">
+		<tasklet transaction-manager="transactionManager" allow-start-if-complete="false" >
+			<chunk processor="processor" reader="reader" writer="insertWriter" commit-interval="${validate.commit.interval}" />
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+	
+	<step id="dbRevalidateStep" abstract="true" xmlns="http://www.springframework.org/schema/batch"> 	
+		<tasklet transaction-manager="transactionManager" allow-start-if-complete="true">
+			<chunk processor="processor" reader="jdbcRevalidationReader" writer="updateWriter" commit-interval="${revalidate.commit.interval}" />
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+	
+	<!-- Step that waits for Loyalty Engine to process transactions from the current file -->
+		
+	<step id="waitForLoyEngineStep" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true">
+			<b:bean id="waitForLoyEngineBean" class="com.loyaltymethods.fx.step.LoyEngineWaitStep">
+				<b:property name="timeout" value="${loyengine.inactivity.timeout}"/>
+				<b:property name="interval" value="${loyengine.inactivity.interval}"/>
+				<b:property name="intFileDAO" ref="intFileDAO"/>
+			</b:bean>
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>
+
+	
+	<!-- Abstract parent to a specific type of file job -->
+	
+	<job id="processFileJob" abstract="true" xmlns="http://www.springframework.org/schema/batch">
+		<listeners>
+			<listener ref="jobInitializer"/>	<!-- Initializes the CX_FINT_FILE record. -->
+		</listeners>
+	</job>
+</beans>

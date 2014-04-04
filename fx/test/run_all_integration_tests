@@ -1,0 +1,3 @@
+rm $FX_HOME/logs/Test-Delimited-FileImport_none.log 2>&1 >/dev/null
+$FX_HOME/bin/runbatch Test-Delimited-FileImport none 2>&1 >/dev/null
+$FX_HOME/test/check_int_success $FX_HOME/logs/Test-Delimited-FileImport_none.log

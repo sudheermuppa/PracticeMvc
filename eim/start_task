@@ -1,0 +1,31 @@
+﻿Siebel Enterprise Applications Siebel Server Manager, Version 8.2.2 [22314] LANG_INDEPENDENT 
+Copyright (c) 1994-2011, Oracle. All rights reserved.
+
+The Programs (which include both the software and documentation) contain
+proprietary information; they are provided under a license agreement containing
+restrictions on use and disclosure and are also protected by copyright, patent,
+and other intellectual and industrial property laws. Reverse engineering,
+disassembly, or decompilation of the Programs, except to the extent required to
+obtain interoperability with other independently created software or as specified
+by law, is prohibited.
+
+Oracle, JD Edwards, PeopleSoft, and Siebel are registered trademarks of
+Oracle Corporation and/or its affiliates. Other names may be trademarks
+of their respective owners.
+
+If you have received this software in error, please notify Oracle Corporation
+immediately at 1.800.ORACLE1.
+
+Type "help" for list of commands, "help <topic>" for detailed help
+
+Connected to 1 server(s) out of a total of 1 server(s) in the enterprise
+
+srvrmgr:APP_OM1> start task for component EIM with config='LM_Txn.IFB', ExtendedParams='BatchRange=5000-5010'
+
+SV_NAME  CC_ALIAS  TK_TASKID  TK_PID  TK_DISP_RUNSTATE  CC_RUNMODE  TK_START_TIME        TK_END_TIME  TK_STATUS  CG_ALIAS  TK_PARENT_TASKNUM  CC_INCARN_NO  TK_LABEL  TK_TASKTYPE  TK_PING_TIME  
+-------  --------  ---------  ------  ----------------  ----------  -------------------  -----------  ---------  --------  -----------------  ------------  --------  -----------  ------------  
+APP_OM1  EIM       49283074   26339   Initializing      Batch       2012-06-24 03:20:37                          EAI                          0                       Normal                     
+
+1 row returned.
+
+srvrmgr:APP_OM1> 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<import resource="launch-context.xml"/>
+	
+	<bean id="step" class="com.loyaltymethods.fx.step.DynSQLStep">
+		<property name="template" value="DynSQL.sql"/>
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="inParams">
+			<map>
+				<entry key="IN_FILE_ID:String" value="1-5AktqBQm"/>
+			</map>
+		</property>
+	</bean>
+	
+</beans>

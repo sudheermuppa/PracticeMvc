@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+
+	<import resource="classpath:file-parsing-context.xml" />
+	<import resource="classpath:sqlstep-context.xml" />
+	<import resource="classpath:step-context.xml" />
+	<import resource="classpath:revalidate-context.xml" />
+	<import resource="classpath:response-context.xml" />
+	<import resource="classpath:integration-context.xml" />
+	
+	<!-- Member EIM import (update) -->
+
+	<job id="EIMImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<flow id="EIMImport.importFlow" parent="commonFileFlow" next="EIMImport.eimFlow"/>
+		<flow id="EIMImport.eimFlow" parent="allProcessingFlow" next="EIMImport.connectTxnIds"/>
+		<step id="EIMImport.connectTxnIds" parent="connectTxnIdsStep" next="EIMImport.responseFlow"/>
+		<flow id="EIMImport.responseFlow" parent="commonResponseFlow"/>
+	</job>
+	
+	<!-- File import only -->
+	
+	<job id="FileImport" parent="processFileJob" xmlns="http://www.springframework.org/schema/batch">
+		<flow id="FileImport.importFlow" parent="commonFileFlow" next="FileImport.responseFlow"/>
+		<flow id="FileImport.responseFlow" parent="commonResponseFlow"/>
+	</job>
+	
+	<!-- Generic import and response flows -->
+	
+	<flow id="commonFileFlow" xmlns="http://www.springframework.org/schema/batch">
+		<step id="file_preValidate" parent="preValidateStep" next="file_decisionPoint"/>
+		<decision id="file_decisionPoint" decider="revalidationDecider">
+			<next on="REVALIDATE" to="file_dbRevalidate"/>
+			<next on="*" to="file_validateTxnMembers"/>
+		</decision>
+		<step id="file_dbRevalidate" parent="dbRevalidateStep" next="file_validateTxnMembers"/>
+		<step id="file_validateTxnMembers" parent="validateTxnMembersStep"/>
+	</flow>
+	
+	<flow id="allProcessingFlow" xmlns="http://www.springframework.org/schema/batch">
+		<step id="AllProc_stageTxnEIM" parent="stageTxnEIMStep" next="AllProc_runAllEIM"/>
+		<!-- Notice we are using runEIMStep and not runAllEIMStep which is just for transactions and defined in their local context -->
+		<step id="AllProc_runAllEIM" parent="runEIMStep" />
+	</flow>
+	
+	<flow id="commonResponseFlow" xmlns="http://www.springframework.org/schema/batch">
+		<decision id="file_responseDecision" decider="responseDecider">
+			<next on="RESPONSE" to="file_genResponse"/>
+			<end on="*" />
+		</decision>
+		<step id="file_genResponse" parent="genResponseStep" next="file_sendResponse" />
+		<step id="file_sendResponse" parent="sendResponseStep" />
+	</flow>
+
+	<!-- Configure 3 different types of EIM - Accrual, Redemption and All -->
+	
+	<step id="runEIMStep" abstract="true"  xmlns="http://www.springframework.org/schema/batch">
+		<tasklet allow-start-if-complete="true">
+			<bean id="runAllEIMStepBean"  scope="step" parent="abstractEIMBean"  xmlns="http://www.springframework.org/schema/beans"/> 	
+		</tasklet>
+		<listeners>
+			<listener ref="stepUpdater"/>
+		</listeners>
+	</step>	
+	<!-- Abstract EIM parent to shorten the definitions of the Acccrual, Redemption and All beans below -->
+		
+	<bean id="abstractEIMBean" parent="abstractSrvrMgrTasklet" abstract="true" class="com.loyaltymethods.fx.step.EIMTasklet" xmlns="http://www.springframework.org/schema/beans">
+		<property name="sblDS" ref="siebelDataSource"/>
+		<property name="IFBFile" value="${IFBFile}"/>
+		<property name="intFileDAO" ref="intFileDAO"/>
+		<property name="eimTable" value="${eimTable}"/>
+		<property name="fileId" value="#{jobExecutionContext['fileId']}"/>
+	</bean>	
+</beans>

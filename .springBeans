@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beansProjectDescription>
+	<version>1</version>
+	<pluginVersion><![CDATA[3.2.0.201303060654-RELEASE]]></pluginVersion>
+	<configSuffixes>
+		<configSuffix><![CDATA[xml]]></configSuffix>
+	</configSuffixes>
+	<enableImports><![CDATA[true]]></enableImports>
+	<configs>
+		<config>src/test/resources/FlatFileValidator.xml</config>
+		<config>src/test/resources/DynSQLTest.xml</config>
+		<config>src/main/resources/response-context.xml</config>
+		<config>src/test/resources/MailTest.xml</config>
+		<config>src/test/resources/ErrorMessageTests.xml</config>
+		<config>src/main/resources/file-parsing-context.xml</config>
+		<config>src/main/resources/services-context.xml</config>
+		<config>src/main/resources/dao-context.xml</config>
+		<config>src/main/resources/revalidate-context.xml</config>
+		<config>src/main/resources/listeners-context.xml</config>
+		<config>src/main/resources/integration-context.xml</config>
+		<config>src/main/resources/sqlstep-context.xml</config>
+		<config>src/main/resources/txn-job-context.xml</config>
+		<config>src/main/resources/metagen-context.xml</config>
+		<config>src/main/resources/txn-meta.xml</config>
+		<config>src/main/resources/member-job-context.xml</config>
+		<config>src/main/resources/paramread-context.xml</config>
+	</configs>
+	<configSets>
+		<configSet>
+			<name><![CDATA[test]]></name>
+			<allowBeanDefinitionOverriding>true</allowBeanDefinitionOverriding>
+			<incomplete>false</incomplete>
+			<configs>
+			</configs>
+			<profiles>
+			</profiles>
+		</configSet>
+	</configSets>
+</beansProjectDescription>

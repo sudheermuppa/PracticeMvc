@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	
+	<bean id="ifm" class="com.loyaltymethods.fx.file.FlatFileValidator">
+		<property name="typed" value="false"/>
+		<property name="validations">
+			<map>
+				<entry key="TEST_DEFAULT_VALUE">
+					<map>
+						<entry key="Format" value="yyyy/MM/dd"/>
+						<entry key="Type" value="Date"/>
+						<entry key="Default" value="2001/12/01"/>
+					</map>
+				</entry>
+				<entry key="TEST_DATE_FORMAT">
+					<map>
+						<entry key="Format" value="yyyy/MM/dd"/>
+						<entry key="Type" value="Date"/>
+					</map>
+				</entry>
+				<entry key="TEST_REQUIRED">
+					<map>
+						<entry key="Required" value="true"/>
+						<entry key="Type" value="Date"/>
+					</map>
+				</entry>
+				<entry key="TEST_DEFAULT_DATE_FORMAT">
+					<map>
+						<entry key="Type" value="Date"/>
+					</map>
+				</entry>
+				<entry key="TEST_NUMBER_FORMAT">
+					<map>
+						<entry key="Type" value="Number"/>
+						<entry key="Format" value="####;"/>
+					</map>
+				</entry>				
+
+				<entry key="TEST_DEFAULT_NUMBER_FORMAT">
+					<map>
+						<entry key="Type" value="Number"/>
+					</map>
+				</entry>
+				<entry key="TEST_STRING_FORMAT">
+					<map>
+						<entry key="Format" value=".*"/>
+						<entry key="Type" value="Character"/>
+					</map>
+				</entry>				
+				<entry key="TEST_STRING_LENGTH">
+					<map>
+						<entry key="Type" value="Character"/>
+						<entry key="Length" value="5"/>
+					</map>
+				</entry>				
+				
+			</map>
+		</property>
+	</bean>
+	
+	
+</beans>

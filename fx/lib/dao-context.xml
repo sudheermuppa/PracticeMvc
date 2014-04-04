@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- DAOs -->
+	
+	<import resource="classpath:launch-context.xml"/>
+
+	<!-- Access to CX_FINT_FILE -->
+	
+	<bean id="intFileDAO" class="com.loyaltymethods.fx.data.IntegrationFileDAO">
+		<property name="sblDS" ref="siebelDataSource"/>
+		<property name="batchDS" ref="dataSource"/>
+		<property name="prestageTable" value="${prestageTable}"/>
+		<property name="eimTable" value="${eimTable}"/>
+		<property name="eimRowIdColumn" value="${eimRowIdColumn}"/>
+		<property name="baseTable" value="${targetTable}"/>
+		<property name="timeZone" value="${misc.timezone}"/>
+	</bean>
+	
+	<!-- Access to CX_FINT_INTG -->
+	
+	<bean id="integrationDAO" class="com.loyaltymethods.fx.data.IntegrationDAO">
+		<property name="dataSource" ref="siebelDataSource"/>
+		<property name="timeZone" value="${misc.timezone}"/>
+	</bean>
+	
+	<!-- Lookup access to S_LST_OF_VAL in the form of a cache -->
+	
+	<bean id="lovCacheDAO" class="com.loyaltymethods.fx.data.LOVCacheDAO">
+		<property name="sblDS" ref="siebelDataSource"/>
+	</bean>
+	
+
+</beans>

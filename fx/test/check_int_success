@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+
+# This is a basic checker that just makes sure no failures occured.
+#
+# Syntax: check_job_success <integration_logfile>
+
+$logFile = shift @ARGV;
+
+open( F, $logFile ) || die "Can not open log file '$logFile': $!";
+
+$success = 0;
+while(<F>) {
+
+        /There are 0 failed files for this integration./ && do {
+                $success = 1;
+                last;
+        };
+};
+
+print STDERR "Integration $logFile failed\n" unless ($success == 1);
+close(F);

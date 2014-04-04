@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	<!-- Metadata generation info for transactions -->
+
+	<util:map id="MemberTableMap">
+		<entry key="EIMTable" value="EIM_LOY_MEMBER"/>
+		<entry key="BaseTable" value="S_LOY_MEMBER"/>
+		<entry key="ContextFile" value="enroll-job-context.xml"/>
+		<entry key="SysFields" value-ref="memberSysFields" />
+		<entry key="EntitySpecifics" value-ref="memberSpecifics" />
+	</util:map>
+	
+ 	<bean id="memberSpecifics" class="com.loyaltymethods.fx.meta.MemberSpecifics" />
+
+	<!-- System fields that will need to be there regardless. We start by plugging them in, but they can be
+		 overriden by the integraiton template -->
+		 
+	<util:map id="memberSysFields">
+		<entry key="PROG_NAME">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="EIM Mapping" value="EIM_LOY_MEMBER.PROGRAM_PROG_NAME"/>
+				<entry key="System" value="True"/>
+				<entry key="Default" value="${programName}"/>
+			</map>
+		</entry>
+		<entry key="PROG_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_MEMBER.PROGRAM_PROG_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>
+		<entry key="MEM_BU">
+			<map>
+				<entry key="Type" value="Character"/>
+				<entry key="System" value="True"/>
+				<entry key="EIM Mapping" value="EIM_LOY_MEMBER.LOY_MEMBER_BU"/>
+				<entry key="Default" value="Default Organization"/>				
+			</map>
+		</entry>		
+	</util:map>
+</beans>
